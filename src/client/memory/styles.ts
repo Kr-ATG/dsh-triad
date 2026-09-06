@@ -359,7 +359,11 @@ const SHEET = `
 .dsh-memory-entry-card:hover{border-color:var(--m-accent-line);box-shadow:0 2px 10px rgba(65,118,230,.07)}
 .dsh-memory-entry-card-sel,.dsh-memory-entry-card-sel:hover{border-color:var(--m-accent-line);background:var(--m-card-bg-sel);box-shadow:0 2px 12px rgba(65,118,230,.10)}
 @keyframes dsh-memory-entry-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.dsh-memory-entry-top{display:flex;align-items:center;gap:7px;min-width:0}
+/* 卡片是 align-items:flex-start 的纵向 flex：不给 top 行显式 stretch，
+   长标题（white-space:nowrap）会把整行撑到卡片外，行尾的作用域徽章
+   （全局 / 项目名）直接被推出可视区——看起来就是「标题太长就不显示标签」。
+   align-self:stretch 把行锁回卡片宽度，标题再按 flex:1 省略号截断。 */
+.dsh-memory-entry-top{display:flex;align-items:center;gap:7px;min-width:0;align-self:stretch;max-width:100%}
 .dsh-memory-entry-icon{flex:none;display:inline-flex;align-items:center;color:var(--m-primary)}
 .dsh-memory-entry-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;font-weight:600;line-height:20px;color:var(--m-text)}
 .dsh-memory-entry-chip{flex:none;display:inline-flex;align-items:center;gap:3px;max-width:88px;padding:1px 6px;border-radius:5px;background:var(--m-side);color:var(--m-text-2);font-size:10.5px;line-height:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

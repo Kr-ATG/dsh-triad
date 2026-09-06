@@ -1223,7 +1223,8 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
         <span className={css.entryTop}>
           {selecting && renderCheck(entry)}
           <span className={css.entryIcon}>{entryIcon(entry, 17)}</span>
-          <span className={css.entryTitleTxt}>{entryTitle(entry.content)}</span>
+          {/* title 兜底：长标题被省略号截断后，悬停仍能看到全文 */}
+          <span className={css.entryTitleTxt} title={entryTitle(entry.content)}>{entryTitle(entry.content)}</span>
           {renderScopeChip(entry)}
         </span>
         <span className={css.entrySnippet}>{entrySnippet(entry.content)}</span>
@@ -1249,7 +1250,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
       >
         {selecting && renderCheck(entry)}
         <span className={css.entryRowIcon}>{entryIcon(entry, 16)}</span>
-        <span className={css.entryTitleTxt}>{entryTitle(entry.content)}</span>
+        <span className={css.entryTitleTxt} title={entryTitle(entry.content)}>{entryTitle(entry.content)}</span>
         {renderScopeChip(entry)}
       </button>
     )
