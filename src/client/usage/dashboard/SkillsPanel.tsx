@@ -227,6 +227,8 @@ const SKILL_ZH: Record<string, string> = {
   opFailed: '操作失败：{label} — {message}',
   installNameRewrite: 'SKILL.md 里写的是「{meta}」，安装时会统一改成「{name}」（目录名与技能名保持一致）。',
   deleteSkillDirNote: '（技能目录「{dir}」与技能名不同，会一并删除）',
+  skillOffTag: '已停用',
+  presetCountTip: '该预设下已启用 {n} 个 / 共 {total} 个技能',
 }
 
 function skillT(key: string, params?: Record<string, string | number>): string {
@@ -2142,6 +2144,7 @@ const css = {
   bundleMissing: 'skm-bundle-missing',
   bundleMissingBtn: 'skm-bundle-missing-btn',
   installHint: 'skm-install-hint',
+  tagStatus: 'skm-tag-status',
 }
 
 const STYLE_ID = 'dsh-skill-manager-styles'
@@ -2227,6 +2230,14 @@ const SHEET = `
 .skm-tag-source{background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 12%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5)}
 .skm-tag-scope{background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 12%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5)}
 .skm-tag-scope[data-off='true']{border-color:var(--dsw-alias-border-l2,rgba(0,0,0,.12));color:var(--dsw-alias-label-tertiary,#81858c)}
+/* 关掉的技能留在列表里，但要一眼看出是关的：左侧状态条 + 标题降饱和（带过渡） */
+.skm-skill-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background 220ms ease}
+.skm-skill-card[data-off='true']{background:var(--dsw-alias-bg-layer-1,rgba(0,0,0,.02))}
+.skm-skill-card[data-off='true']::before{background:var(--dsw-alias-border-l3,rgba(0,0,0,.2))}
+.skm-skill-card[data-off='true'] .skm-skill-badge,.skm-skill-card[data-off='true'] .skm-skill-title{color:var(--dsw-alias-label-tertiary,#81858c)}
+.skm-skill-card[data-off='true'] .skm-skill-card-desc{color:var(--dsw-alias-label-quaternary,#a5aab2)}
+.skm-skill-badge,.skm-skill-title{transition:color 220ms ease}
+.skm-tag-status{background:transparent;border:1px dashed var(--dsw-alias-border-l2,rgba(0,0,0,.18));color:var(--dsw-alias-label-tertiary,#81858c)}
 .skm-skill-meta{margin-left:auto;flex:none;font-size:12px;line-height:17px;color:var(--dsw-alias-label-caption,#adb2b8);white-space:nowrap}
 .skm-skill-card-foot{display:flex;align-items:center;gap:6px;margin:12px -16px 0;padding:8px 14px 8px 16px;border-top:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.06))}
 .skm-skill-foot-label{flex:none;font-size:12px;line-height:17px;color:var(--dsw-alias-label-caption,#adb2b8)}
@@ -2822,6 +2833,7 @@ body[data-ds-dark-theme] .skm-bundle-missing{color:#f0c48a}
   .skm-toast-dot{animation:none}
   .skm-bundle-empty,.skm-bundle-missing{animation:none}
   .skm-bundle-empty-btn,.skm-bundle-missing-btn{transition:none}
+  .skm-skill-card::before,.skm-skill-badge,.skm-skill-title,.skm-tag-status{transition:none}
 }
 `
 
@@ -3214,6 +3226,7 @@ function SkillCard({ skill, bundleId, bundleName, enabled, lockedReason, scopeLa
   return (
     <li
       className={css.skillCard}
+      data-off={enabled ? undefined : 'true'}
       style={{ '--skm-i': index } as CSSProperties}
     >
       <div className={css.skillCardHead}>
@@ -3250,6 +3263,7 @@ function SkillCard({ skill, bundleId, bundleName, enabled, lockedReason, scopeLa
       <div className={css.skillTags}>
         <span className={`${css.tag} ${css.tagSource}`}>{bundleName ?? skillT('tagLoose')}</span>
         <span className={`${css.tag} ${css.tagScope}`} data-off={enabled ? undefined : 'true'}>{scopeLabel}</span>
+        {!enabled && <span className={`${css.tag} ${css.tagStatus}`}>{skillT('skillOffTag')}</span>}
         <span className={css.skillMeta}>{skillT('fileCount', { n: fileMeta })}</span>
       </div>
       <div className={css.skillCardFoot}>
@@ -3954,14 +3968,14 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     return (skill.description ?? '').toLowerCase().includes(q)
   }
   const statusMatch = (skill: SkillInfo): boolean => {
+    // 「全部」= 不分启用状态一律显示。旧实现在这里也 return on，于是技能一关卡片就
+    // 当场从列表里消失，想再打开只能切到「已停用」档去捞 —— 关掉即隐身。
+    if (statusFilter === 'all') return true
     // 启用态按当前视图计算：全部 Agent = 全局层，预设视图 = 预设层（含全局锁定）。
     const on = activePreset === ALL_PRESETS
       ? toggles.skills[skill.name] !== false
       : skillEnabledAt(activePreset, skill.name)
-    if (statusFilter === 'on') return on
-    if (statusFilter === 'off') return !on
-    // 「全部」+ 预设视图：只显示该预设下启用的技能。
-    return on
+    return statusFilter === 'on' ? on : !on
   }
   const sortedSkills = (list: SkillInfo[]): SkillInfo[] => [...list].sort((a, b) => {
     const order = a.name.localeCompare(b.name)
@@ -4075,7 +4089,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
             >
               <span className={css.catIcon} data-active={activePreset === ALL_PRESETS || undefined}><CatAllIcon size={16} /></span>
               <span className={css.catLabel}>{t('presetAll')}</span>
-              <span className={css.catCount}>{enabledCountFor(ALL_PRESETS)}</span>
+              <span className={css.catCount} title={t('presetCountTip', { n: enabledCountFor(ALL_PRESETS), total: totalSkills })}>{enabledCountFor(ALL_PRESETS)}</span>
             </button>
             {presets.map((preset) => {
               const overrideCount = Object.values(overrides[preset.id] ?? {}).filter((state2) => state2 === false).length
@@ -4089,7 +4103,9 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                 >
                   <span className={css.catIcon} data-active={activePreset === preset.id || undefined}><IconAgentPresetOutline16 size={15} /></span>
                   <span className={css.catLabel}>{preset.name ?? preset.id}</span>
-                  <span className={css.catCount} data-warn={overrideCount > 0 || undefined} title={overrideCount > 0 ? t('presetOverrideCount', { n: overrideCount }) : undefined}>
+                  <span className={css.catCount} data-warn={overrideCount > 0 || undefined}
+                    title={t('presetCountTip', { n: enabledCountFor(preset.id), total: totalSkills })
+                      + (overrideCount > 0 ? ` · ${t('presetOverrideCount', { n: overrideCount })}` : '')}>
                     {enabledCountFor(preset.id)}
                   </span>
                 </button>
