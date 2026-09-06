@@ -175,14 +175,15 @@ function formatCount(value: number): string {
  * 调用方写 `<CountBadge key={value} … />`：数值一变 React 就重挂载，
  * 顺带重放一次弹跳——整理/删除/新增后计数自己跳一下，不用去盯列表。
  */
-function CountBadge({ value, inline = false }: { value: number; inline?: boolean }): JSX.Element {
+function CountBadge({ value, inline = false, hint }: { value: number; inline?: boolean; hint?: string }): JSX.Element {
   const cls = [
     css.navCount,
     css.navCountPop,
     inline ? css.navCountInline : '',
     value === 0 ? css.navCountZero : '',
   ].filter(Boolean).join(' ')
-  return <span className={cls} title={value.toLocaleString()}>{formatCount(value)}</span>
+  const exact = `${value.toLocaleString()}${value === 1 ? '' : ''}`
+  return <span className={cls} title={hint !== undefined ? `${hint} · ${exact}` : exact}>{formatCount(value)}</span>
 }
 
 /** 分割标签输入（逗号/空格/中文逗号）。 */
@@ -1636,7 +1637,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
   if (!open) return null
 
   /* 左侧导航项。 */
-  const navItem = (key: MemoryTab, icon: JSX.Element, label: string, count: number): JSX.Element => (
+  const navItem = (key: MemoryTab, icon: JSX.Element, label: string, count: number, hint?: string): JSX.Element => (
     <button
       key={key}
       type="button"
@@ -1651,7 +1652,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
     >
       <span className={css.navIcon}>{icon}</span>
       {label}
-      <CountBadge key={count} value={count} />
+      <CountBadge key={count} value={count} hint={hint} />
     </button>
   )
 
@@ -1698,7 +1699,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
             {t('add')}
           </button>
           <nav className={css.navList}>
-            {navItem('all', <BoxIcon size={15} />, t('navAll'), summary?.entryCount ?? 0)}
+            {navItem('all', <BoxIcon size={15} />, t('navAll'), summary?.entryCount ?? 0, t('hintActive'))}
             {/* 全局层入口：只看 global 层记忆（跨项目通用），与项目区筛选同源（scope=global）。 */}
             <button
               type="button"
@@ -1714,11 +1715,11 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
             >
               <span className={css.navIcon}><GlobeIcon size={15} /></span>
               {t('navGlobal')}
-              <CountBadge key={summary?.globalCount ?? 0} value={summary?.globalCount ?? 0} />
+              <CountBadge key={summary?.globalCount ?? 0} value={summary?.globalCount ?? 0} hint={t('hintActive')} />
             </button>
-            {navItem('changes', <ClockIcon size={15} />, t('tabChanges'), changeCount)}
-            {navItem('revisions', <HistoryIcon size={15} />, t('tabRevisions'), revisions.length)}
-            {navItem('trash', <TrashIcon size={15} />, t('navTrash'), summary?.deprecatedCount ?? 0)}
+            {navItem('changes', <ClockIcon size={15} />, t('tabChanges'), changeCount, t('hintAllChanges'))}
+            {navItem('revisions', <HistoryIcon size={15} />, t('tabRevisions'), revisions.length, t('hintRevisions'))}
+            {navItem('trash', <TrashIcon size={15} />, t('navTrash'), summary?.deprecatedCount ?? 0, t('hintDeprecated'))}
           </nav>
           <div className={css.navSep} />
           <div className={css.sectionHeader}>
@@ -1849,25 +1850,30 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                     {t('statEntries')}
                   </span>
                   <span className={css.topStatSep}>·</span>
-                  <span className={css.topStat}>
-                    <span className={css.topStatVal}>{summary.projectCount}</span>
+                  <span className={css.topStat} title={t('statProjects')}>
+                    <span className={css.topStatVal}>{projectTotal}</span>
                     {t('statProjects')}
                   </span>
                   {summary.pinnedCount !== undefined && (
                     <>
                       <span className={css.topStatSep}>·</span>
+                      {/* 图标后补文字标签：光一个 ★5 / 💡4407 没人知道在数什么。 */}
                       <span className={css.topStat} title={t('tabPinned')}>
                         <span style={{ color: '#F5C242' }}>★</span>
                         <span className={css.topStatVal}>{summary.pinnedCount}</span>
+                        {t('statPinnedShort')}
                       </span>
                     </>
                   )}
-                  {changeCount > 0 && (
+                  {(summary.todayChanges ?? 0) > 0 && (
                     <>
                       <span className={css.topStatSep}>·</span>
-                      <span className={css.topStat} title={t('tabChanges')}>
+                      {/* 灯泡位历史上被改成显示全量 changeCount（4407），与图标本意
+                          「今日变更」对不上——这里回到今日数，全量放 tooltip。 */}
+                      <span className={css.topStat} title={`${t('hintAllChanges')} ${changeCount.toLocaleString()}`}>
                         <span style={{ color: '#5B8DEF', display: 'inline-flex' }}><LightbulbIcon size={13} /></span>
-                        <span className={css.topStatVal}>{changeCount}</span>
+                        <span className={css.topStatVal}>{summary.todayChanges}</span>
+                        {t('statChangesToday')}
                       </span>
                     </>
                   )}
