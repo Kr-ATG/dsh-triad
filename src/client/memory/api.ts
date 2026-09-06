@@ -202,6 +202,9 @@ function normalizeSummary(summary: MemorySummaryResponse): MemorySummaryResponse
     changeCount: opt(summary.changeCount),
     pinnedCount: opt(summary.pinnedCount),
     disabledCount: opt(summary.disabledCount),
+    // 回收站计数：早先这里漏了透传，host 明明返回了 deprecatedCount，
+    // 面板拿到的永远是 undefined → 「回收站」后面光秃秃不显示数字。
+    deprecatedCount: opt(summary.deprecatedCount),
     longtermCount: opt(summary.longtermCount),
     globalCount: opt(summary.globalCount),
     revisionCount: opt(summary.revisionCount),

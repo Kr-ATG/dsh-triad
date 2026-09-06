@@ -158,6 +158,33 @@ function hashOf(text: string): number {
   return Math.abs(hash)
 }
 
+/**
+ * 计数紧凑化：4407 → 4.4k。导航徽章里塞四位数会把整行撑变形，
+ * 精确值放 title 里，悬停可看。
+ */
+function formatCount(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return '0'
+  if (value < 1000) return String(value)
+  if (value < 10_000) return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`
+  return `${Math.round(value / 1000)}k`
+}
+
+/**
+ * 计数徽章（取代「标签 + 裸数字」）。
+ *
+ * 调用方写 `<CountBadge key={value} … />`：数值一变 React 就重挂载，
+ * 顺带重放一次弹跳——整理/删除/新增后计数自己跳一下，不用去盯列表。
+ */
+function CountBadge({ value, inline = false }: { value: number; inline?: boolean }): JSX.Element {
+  const cls = [
+    css.navCount,
+    css.navCountPop,
+    inline ? css.navCountInline : '',
+    value === 0 ? css.navCountZero : '',
+  ].filter(Boolean).join(' ')
+  return <span className={cls} title={value.toLocaleString()}>{formatCount(value)}</span>
+}
+
 /** 分割标签输入（逗号/空格/中文逗号）。 */
 function splitTags(raw: string): string[] {
   return raw.split(/[,，\s]+/).map(tag => tag.trim()).filter(Boolean).slice(0, 8)
@@ -1079,6 +1106,8 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
 
   /** 变更导航计数：优先全量 changeCount，旧 host 无该字段时回落 todayChanges。 */
   const changeCount = summary?.changeCount ?? summary?.todayChanges ?? 0
+  /** 项目总数：与下面列出的项目行同源（含零记忆的 DSH 工作区）。 */
+  const projectTotal = projects.length > 0 ? projects.length : (summary?.projectCount ?? 0)
 
   // ── 渲染函数 ─────────────────────────────────────────────────────────
 
@@ -1363,7 +1392,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
             )}
           </div>
         )}
-        <div className={css.sectionTitle}>{t('relatedTitle')} ({entries.length})</div>
+        <div className={css.sectionTitle}>{t('relatedTitle')}<CountBadge key={entries.length} value={entries.length} inline /></div>
         <div className={css.sectionLine} />
         {entries.length === 0 ? (
           <div className={css.historyDesc}>{related.loading ? t('consolidating') : t('relatedEmpty')}</div>
@@ -1622,7 +1651,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
     >
       <span className={css.navIcon}>{icon}</span>
       {label}
-      {count > 0 && <span className={css.navCount}>{count}</span>}
+      <CountBadge key={count} value={count} />
     </button>
   )
 
@@ -1685,7 +1714,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
             >
               <span className={css.navIcon}><GlobeIcon size={15} /></span>
               {t('navGlobal')}
-              {(summary?.globalCount ?? 0) > 0 && <span className={css.navCount}>{summary?.globalCount ?? 0}</span>}
+              <CountBadge key={summary?.globalCount ?? 0} value={summary?.globalCount ?? 0} />
             </button>
             {navItem('changes', <ClockIcon size={15} />, t('tabChanges'), changeCount)}
             {navItem('revisions', <HistoryIcon size={15} />, t('tabRevisions'), revisions.length)}
@@ -1717,7 +1746,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
             >
               <span className={css.navIcon} style={{ color: 'var(--m-primary)' }}><BoxIcon size={14} /></span>
               {t('navAllProjects')}
-              <span className={css.navCount}>{summary?.projectCount ?? projects.length}</span>
+              <CountBadge key={projectTotal} value={projectTotal} />
             </button>
             {projects.map(project => {
               const name = project.alias ?? project.path.split(/[\\/]/).filter(Boolean).at(-1) ?? project.hash
@@ -1738,7 +1767,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                     <FolderIcon size={12} />
                   </span>
                   <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
-                  <span className={css.navCount}>{project.entryCount}</span>
+                  <CountBadge key={project.entryCount} value={project.entryCount} />
                 </button>
               )
             })}
@@ -1771,7 +1800,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                 >
                   <span className={css.catDot} style={{ ['--dot' as string]: DOT_COLORS[hashOf(cat.tag) % DOT_COLORS.length] }} />
                   <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cat.tag}</span>
-                  <span className={css.navCount}>{cat.count}</span>
+                  <CountBadge key={cat.count} value={cat.count} />
                 </button>
               )
             })}
@@ -1779,7 +1808,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
               <button type="button" className={`${css.catRow} ${css.catMore}`} onClick={() => { setCatExpanded(true) }}>
                 <span className={css.catDot} style={{ ['--dot' as string]: '#CED2DA' }} />
                 {t('navMoreCategories')}
-                <span className={css.navCount}>▾</span>
+                <span className={css.navChevron}>▾</span>
               </button>
             )}
           </div>

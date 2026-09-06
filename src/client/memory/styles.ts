@@ -29,6 +29,10 @@ export const css = {
   navItemActive: 'dsh-memory-nav-item-active',
   navIcon: 'dsh-memory-nav-icon',
   navCount: 'dsh-memory-nav-count',
+  navCountZero: 'dsh-memory-nav-count-zero',
+  navCountPop: 'dsh-memory-nav-count-pop',
+  navChevron: 'dsh-memory-nav-chevron',
+  navCountInline: 'dsh-memory-nav-count-inline',
   navSep: 'dsh-memory-nav-sep',
   sectionHeader: 'dsh-memory-section-header',
   sectionTitleTxt: 'dsh-memory-section-title',
@@ -242,6 +246,9 @@ const SHEET = `
   --m-err-bg:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e0434b) 12%,transparent);
   --m-info:var(--dsw-alias-state-info-primary,#5b9dff);
   --m-info-bg:color-mix(in srgb,var(--dsw-alias-state-info-primary,#5b9dff) 12%,transparent);
+  /* 计数徽章底色（中性灰，明暗主题都成立） */
+  --m-count-bg:color-mix(in srgb,var(--m-text-3) 17%,transparent);
+  --m-count-bg-hover:color-mix(in srgb,var(--m-text-3) 28%,transparent);
   background:var(--dsw-alias-bg-layer-1,#fff);
   color:var(--m-text);
 }
@@ -265,8 +272,20 @@ const SHEET = `
 .dsh-memory-nav-item:hover{background:rgba(65,118,230,.06);color:var(--m-text)}
 .dsh-memory-nav-item-active,.dsh-memory-nav-item-active:hover{background:var(--m-primary-soft);color:var(--m-primary);font-weight:600}
 .dsh-memory-nav-icon{flex:none;display:inline-flex;align-items:center;color:inherit}
-.dsh-memory-nav-count{margin-left:auto;font-size:12px;line-height:18px;color:var(--m-text-3);font-variant-numeric:tabular-nums}
-.dsh-memory-nav-item-active .dsh-memory-nav-count{color:var(--m-primary)}
+/* 计数徽章：取代「标签 + 裸数字」（旧样式在 4 位数时把整条导航撑得很难看）。
+   小胶囊 + 紧凑记数（4407 → 4.4k，悬停看精确值）+ 选中态实心 + 数值变化弹一下。 */
+.dsh-memory-nav-count{margin-left:auto;flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;box-sizing:border-box;padding:0 6px;border-radius:999px;background:var(--m-count-bg);color:var(--m-text-3);font-size:11px;font-weight:600;line-height:18px;letter-spacing:.2px;font-variant-numeric:tabular-nums;transition:background .18s cubic-bezier(.2,.8,.2,1),color .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease}
+.dsh-memory-nav-count-zero{min-width:16px;padding:0 4px;background:transparent;color:var(--m-text-3);opacity:.55;font-weight:500}
+.dsh-memory-nav-item:hover .dsh-memory-nav-count,.dsh-memory-proj-row:hover .dsh-memory-nav-count,.dsh-memory-cat-row:hover .dsh-memory-nav-count{background:var(--m-count-bg-hover);color:var(--m-text-2)}
+.dsh-memory-nav-item-active .dsh-memory-nav-count,.dsh-memory-proj-row-active .dsh-memory-nav-count,.dsh-memory-cat-row-active .dsh-memory-nav-count{background:var(--m-primary);color:#fff;box-shadow:0 2px 8px rgba(65,118,230,.32)}
+.dsh-memory-nav-item-active:hover .dsh-memory-nav-count,.dsh-memory-proj-row-active:hover .dsh-memory-nav-count,.dsh-memory-cat-row-active:hover .dsh-memory-nav-count{background:var(--m-primary-hover);color:#fff}
+.dsh-memory-nav-count-pop{animation:dsh-memory-count-pop .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes dsh-memory-count-pop{0%{transform:scale(.72);opacity:.25}55%{transform:scale(1.14)}100%{transform:scale(1);opacity:1}}
+/* 行内用法（详情区小节标题）：不顶到行尾 */
+.dsh-memory-nav-count-inline{margin-left:0}
+/* 「更多分类」的展开箭头不是计数，别套胶囊 */
+.dsh-memory-nav-chevron{margin-left:auto;flex:none;color:var(--m-text-3);font-size:11px;line-height:18px}
+@media (prefers-reduced-motion:reduce){.dsh-memory-nav-count-pop{animation:none}}
 .dsh-memory-nav-sep{display:none}
 .dsh-memory-section-header{display:none}
 .dsh-memory-section-title{font-size:13px;font-weight:500;line-height:20px;color:var(--m-text-2)}
@@ -387,6 +406,9 @@ const SHEET = `
 .dsh-memory-detail-body{min-width:0;font-size:14px;line-height:23px;color:var(--m-text);word-break:break-word}
 .dsh-memory-detail-tags{display:flex;flex-wrap:wrap;gap:5px;padding-top:12px;border-top:1px solid var(--m-border)}
 .dsh-memory-detail-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--m-border);font-size:11.5px;line-height:17px;color:var(--m-text-3)}
+/* 详情区小节标题（关联信息 / 历史记录 / 相关记忆）。旧实现的规则写在了
+   .dsh-memory-section-title 上，而面板用的是 -lg 后缀，等于没样式。 */
+.dsh-memory-section-title-lg{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;line-height:22px;color:var(--m-text);margin-top:12px}
 .dsh-memory-section-title{font-size:15px;font-weight:600;line-height:22px;color:var(--m-text);margin-top:12px}
 .dsh-memory-section-line{flex:none;width:28px;height:3px;border-radius:2px;background:#4176e6;margin:6px 0 8px}
 .dsh-memory-stat{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;line-height:19px;color:var(--m-text-2);white-space:nowrap}

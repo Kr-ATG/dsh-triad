@@ -69,8 +69,9 @@ export function renderTimeline(entries: MemoryEntry[]): string {
   return lines.join('\n')
 }
 
-/** 渲染 identity（全局层身份/偏好条目）。 */
+/** 渲染 identity（全局层身份/偏好条目）。空集返回空串（不留只有标题的孤儿产物）。 */
 export function renderIdentity(entries: MemoryEntry[]): string {
+  if (entries.length === 0) return ''
   const lines: string[] = ['# 用户身份与偏好']
   for (const entry of entries) {
     lines.push(entryLine(entry))
@@ -236,6 +237,13 @@ export async function compileAll(store: MemoryStore, config: MemoryConfig): Prom
   }
   for (const [hash, owned] of byProject) {
     await store.writeProjectArtifacts(hash, compileProjectArtifacts(owned))
+  }
+  // 条目被删光 / 全部废弃的项目：把上一版产物抹成空文件。
+  // 旧实现只写「还有活跃条目」的项目，于是删干净的项目磁盘上永远留着
+  // memory.md / facts.md —— 已删除的记忆在产物里阴魂不散。
+  const emptied = (await store.listProjectHashes()).filter(hash => !byProject.has(hash))
+  for (const hash of emptied) {
+    await store.writeProjectArtifacts(hash, { memory: '', facts: '', pinned: '' })
   }
   const global = entries.filter(entry => entry.scope === 'global')
   await store.writeGlobalArtifacts(compileGlobalArtifacts(global))

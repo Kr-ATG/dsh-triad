@@ -160,7 +160,9 @@ async function handle(
     if (method === 'GET' && rest === '/tags') {
       const entries = await store.readEntries()
       const counts = new Map<string, number>()
+      // 已软废弃的条目不贡献分类计数：否则「删除的记忆」仍挂在分类数字上。
       for (const entry of entries) {
+        if (entry.deprecated === true) continue
         for (const tag of entry.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1)
       }
       json(res, 200, { tags: [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([tag, count]) => ({ tag, count })) })
@@ -182,10 +184,12 @@ async function handle(
       json(res, 200, {
         today,
         entryCount: entries.filter(entry => entry.deprecated !== true).length,
-        projectCount: (await store.listProjects(entries)).length,
+        // 与面板项目列表同源（含零记忆的 DSH 工作区），否则「全部项目 N」
+        // 和下面列出的项目行数对不上。
+        projectCount: (await mergeWorkspaces(store, await store.listProjects(entries))).length,
         todayChanges: (await store.readChanges(today)).length,
         changeCount: (await store.readChanges()).length,
-        pinnedCount: entries.filter(entry => entry.pinned).length,
+        pinnedCount: entries.filter(entry => entry.pinned && entry.deprecated !== true).length,
         disabledCount: entries.filter(entry => entry.disabled === true).length,
         deprecatedCount: entries.filter(entry => entry.deprecated === true).length,
         longtermCount: entries.filter(entry => entry.layer === 'long' && entry.deprecated !== true).length,

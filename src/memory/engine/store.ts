@@ -615,7 +615,27 @@ export class MemoryStore {
     return meta?.autoMemory !== false
   }
 
-  /** 列出全部项目（含 meta 与统计）。 */
+  /**
+   * projects/ 下的全部目录名（hash），含 meta.json 缺失的裸目录。
+   * 编译时用它找出「条目已被删光、md 产物却还留着旧内容」的项目。
+   */
+  async listProjectHashes(): Promise<string[]> {
+    try {
+      return (await readdir(join(this.root, 'projects'), { withFileTypes: true }))
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name)
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * 列出全部项目（含 meta 与统计）。
+   *
+   * entryCount / pinnedCount 只数活跃条目：已软废弃（回收站里的）不计。
+   * 早先这里把 deprecated 一并算进去，导致「全部记忆 5」与「某项目 8」
+   * 自相矛盾——删掉的记忆在项目计数里阴魂不散。
+   */
   async listProjects(entries: MemoryEntry[]): Promise<Array<ProjectMeta & { hash: string; entryCount: number; pinnedCount: number; autoMemory: boolean }>> {
     const dir = join(this.root, 'projects')
     let hashes: string[]
@@ -630,7 +650,8 @@ export class MemoryStore {
     for (const hash of hashes) {
       const meta = await this.readProjectMeta(hash)
       if (meta === undefined) continue
-      const owned = entries.filter(entry => entry.scope === 'project' && entry.projectHash === hash)
+      const owned = entries.filter(entry =>
+        entry.scope === 'project' && entry.projectHash === hash && entry.deprecated !== true)
       projects.push({
         hash,
         path: meta.path,
