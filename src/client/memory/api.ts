@@ -144,12 +144,24 @@ export interface MemoryConfigView {
   dailyCompileEnabled?: boolean
   consolidateEnabled?: boolean
   logApiRequests?: boolean
+  /** 新会话是否默认注入记忆（对话框开关的初始态；会话级覆盖优先）。 */
+  injectDefaultEnabled?: boolean
   /** 语义检索后端（schema v3）。 */
   embeddingProvider?: 'off' | 'http' | 'local'
   embeddingBaseUrl?: string
   embeddingModel?: string
   embeddingApiKey?: string
   embeddingDimensions?: number
+}
+
+/** 注入开关状态（会话级 + 全局默认；面板/对话框开关共用）。 */
+export interface InjectStateView {
+  /** 该会话当前是否注入（显式覆盖 ?? 默认值）。 */
+  enabled: boolean
+  /** config.injectDefaultEnabled：新会话与未单独设置的会话是否注入。 */
+  defaultEnabled?: boolean
+  /** 该会话是否单独设置过（false/null = 跟随默认）。 */
+  explicit?: boolean | null
 }
 
 interface ApiError {
@@ -270,8 +282,9 @@ export interface MemoryApi {
     pinned?: boolean
     importance?: number
   }) => Promise<{ ok: boolean; created: boolean; entry: MemoryEntryView }>
-  getInjectState: (sessionId: string) => Promise<{ enabled: boolean }>
-  setInjectState: (sessionId: string, enabled: boolean) => Promise<{ ok: boolean; enabled: boolean }>
+  getInjectState: (sessionId: string) => Promise<InjectStateView>
+  /** enabled=null → 清除本会话覆盖，回到默认值。 */
+  setInjectState: (sessionId: string, enabled: boolean | null) => Promise<InjectStateView & { ok: boolean }>
   consolidate: (scope?: 'all' | 'global' | 'project', projectHash?: string) => Promise<{ ok: boolean; results: ConsolidateResultView[] }>
   revisions: () => Promise<{ revisions: RevisionView[] }>
   rollback: (revisionId: string) => Promise<{ ok: boolean }>
@@ -322,8 +335,8 @@ export function createMemoryApi(): MemoryApi {
     deleteProject: (projectHash) => sendJson<{ ok: boolean; deleted: number }>('/delete-project', { projectHash }),
     meta: (projectHash, patch) => sendJson<{ ok: boolean; meta: ProjectView }>('/meta', { projectHash, ...patch }),
     remember: (input) => sendJson<{ ok: boolean; created: boolean; entry: MemoryEntryView }>('/remember', input).then(withEntry),
-    getInjectState: (sessionId) => getJson<{ enabled: boolean }>(`/inject-state?sessionId=${encodeURIComponent(sessionId)}`),
-    setInjectState: (sessionId, enabled) => sendJson<{ ok: boolean; enabled: boolean }>('/inject-state', { sessionId, enabled }),
+    getInjectState: (sessionId) => getJson<InjectStateView>(`/inject-state?sessionId=${encodeURIComponent(sessionId)}`),
+    setInjectState: (sessionId, enabled) => sendJson<InjectStateView & { ok: boolean }>('/inject-state', { sessionId, enabled }),
     consolidate: (scope = 'all', projectHash) => sendJson<{ ok: boolean; results: ConsolidateResultView[] }>('/consolidate', { scope, projectHash }),
     revisions: () => getJson<{ revisions: RevisionView[] }>('/revisions'),
     rollback: (revisionId) => sendJson<{ ok: boolean }>('/rollback', { revisionId }),

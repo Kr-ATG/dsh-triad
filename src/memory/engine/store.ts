@@ -572,29 +572,57 @@ export class MemoryStore {
 
   /** 注入被关闭的会话 id（内存缓存；null = 未加载）。 */
   private injectDisabledCache: Set<string> | null = null
+  /** 注入被显式开启的会话 id（内存缓存；null = 未加载）。 */
+  private injectForcedCache: Set<string> | null = null
 
-  private async ensureInjectCache(): Promise<Set<string>> {
-    if (this.injectDisabledCache !== null) return this.injectDisabledCache
-    const state = await this.readState()
-    this.injectDisabledCache = new Set(Array.isArray(state.injectDisabled) ? state.injectDisabled : [])
-    return this.injectDisabledCache
+  private async ensureInjectCaches(): Promise<{ disabled: Set<string>; forced: Set<string> }> {
+    if (this.injectDisabledCache === null || this.injectForcedCache === null) {
+      const state = await this.readState()
+      this.injectDisabledCache = new Set(Array.isArray(state.injectDisabled) ? state.injectDisabled : [])
+      this.injectForcedCache = new Set(Array.isArray(state.injectForced) ? state.injectForced : [])
+    }
+    return { disabled: this.injectDisabledCache, forced: this.injectForcedCache }
   }
 
-  /** 该会话是否启用记忆注入（默认开启）。 */
-  async isInjectEnabled(sessionId: string): Promise<boolean> {
-    const cache = await this.ensureInjectCache()
-    return !cache.has(sessionId)
+  /**
+   * 该会话的显式开关；未单独设置返回 null（调用方回退 config.injectDefaultEnabled）。
+   * 关闭列表优先于开启列表：同时出现按更保守的「不注入」处理。
+   */
+  async injectStateOf(sessionId: string): Promise<boolean | null> {
+    const { disabled, forced } = await this.ensureInjectCaches()
+    if (disabled.has(sessionId)) return false
+    if (forced.has(sessionId)) return true
+    return null
   }
 
-  /** 设置该会话的记忆注入开关（持久化到 state.json；调用频率极低，直接写）。 */
-  async setInjectEnabled(sessionId: string, enabled: boolean): Promise<void> {
-    const cache = await this.ensureInjectCache()
-    const next = new Set(cache)
-    if (enabled) next.delete(sessionId)
-    else next.add(sessionId)
-    this.injectDisabledCache = next
+  /** 该会话是否启用记忆注入（未单独设置时用 fallback，即配置默认值）。 */
+  async isInjectEnabled(sessionId: string, fallback = true): Promise<boolean> {
+    return (await this.injectStateOf(sessionId)) ?? fallback
+  }
+
+  /**
+   * 设置该会话的记忆注入开关（持久化到 state.json；调用频率极低，直接写）。
+   * null = 清除本会话覆盖，回到 config.injectDefaultEnabled（面板「跟随默认」）。
+   */
+  async setInjectEnabled(sessionId: string, enabled: boolean | null): Promise<void> {
+    const { disabled, forced } = await this.ensureInjectCaches()
+    const nextDisabled = new Set(disabled)
+    const nextForced = new Set(forced)
+    if (enabled === null) {
+      nextDisabled.delete(sessionId)
+      nextForced.delete(sessionId)
+    } else if (enabled) {
+      nextDisabled.delete(sessionId)
+      nextForced.add(sessionId)
+    } else {
+      nextForced.delete(sessionId)
+      nextDisabled.add(sessionId)
+    }
+    this.injectDisabledCache = nextDisabled
+    this.injectForcedCache = nextForced
     const state = await this.readState()
-    state.injectDisabled = [...next]
+    state.injectDisabled = [...nextDisabled]
+    state.injectForced = [...nextForced]
     await this.writeState(state)
   }
 

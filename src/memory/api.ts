@@ -250,18 +250,23 @@ async function handle(
       return
     }
 
-    // ── 记忆注入开关（按会话） ────────────────────────────────────────
+    // ── 记忆注入开关（按会话 + 全局默认） ─────────────────────────────
+    // explicit：该会话是否单独设置过（null = 跟随 config.injectDefaultEnabled）。
     if (method === 'GET' && rest === '/inject-state') {
       const sessionId = url.searchParams.get('sessionId') ?? ''
-      json(res, 200, { enabled: await store.isInjectEnabled(sessionId) })
+      const defaultEnabled = config.injectDefaultEnabled !== false
+      const explicit = await store.injectStateOf(sessionId)
+      json(res, 200, { enabled: explicit ?? defaultEnabled, defaultEnabled, explicit })
       return
     }
     if (method === 'POST' && rest === '/inject-state') {
       const body = await readBody(req) as Record<string, unknown>
       const sessionId = requireString(body.sessionId, 'sessionId')
-      const enabled = body.enabled !== false
+      // enabled=null → 清除本会话覆盖（面板「跟随默认」按钮）。
+      const enabled = body.enabled === null ? null : body.enabled !== false
       await store.setInjectEnabled(sessionId, enabled)
-      json(res, 200, { ok: true, enabled })
+      const defaultEnabled = config.injectDefaultEnabled !== false
+      json(res, 200, { ok: true, enabled: enabled ?? defaultEnabled, defaultEnabled, explicit: enabled !== null })
       return
     }
 

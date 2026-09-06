@@ -88,8 +88,13 @@ export interface StoreState {
   perSession: Record<string, SessionTickerState>
   /** 上次每日编译日期（YYYY-MM-DD）。 */
   lastDailyDate: string | null
-  /** 记忆注入被关闭的会话 id 列表（不在列表 = 注入开启）。 */
+  /** 记忆注入被显式关闭的会话 id 列表。 */
   injectDisabled?: string[]
+  /**
+   * 记忆注入被显式开启的会话 id 列表（injectDefaultEnabled=false 时的白名单）。
+   * 两个列表都不含该会话 = 未单独设置 = 跟随 config.injectDefaultEnabled。
+   */
+  injectForced?: string[]
 }
 
 /** 单个会话的 ticker 状态。 */
@@ -156,6 +161,13 @@ export interface MemoryConfig {
   consolidateModel?: string
   /** 是否记录 API 请求日志（默认 false；防 api.log 被面板轮询请求灌满）。 */
   logApiRequests: boolean
+  /**
+   * 记忆注入默认开关（对话框左端大脑按钮的初始态）：
+   * true = 新会话默认注入；false = 新会话默认不注入。
+   * 用户在具体会话里手动开/过关，会写入会话级覆盖（state.json），
+   * 覆盖优先于本默认值（见 store.isInjectEnabled）。
+   */
+  injectDefaultEnabled: boolean
   /** 注入检索 top-k（当前任务相关记忆注入条数；identity/pinned/长期常驻不占此预算）。 */
   injectTopK: number
   /** 全局条目数上限（超限按 importance + recency 淘汰低分条目）。 */
@@ -205,6 +217,7 @@ export const DEFAULT_CONFIG: MemoryConfig = {
   // 模型连 70 条都会 60s 超时，导致整理永远失败且被误报「无需整理」。
   consolidateTimeoutMs: 300_000,
   logApiRequests: false,
+  injectDefaultEnabled: true,
   injectTopK: 8,
   entryLimit: 500,
   pruneNeverHitDays: 21,
@@ -296,7 +309,7 @@ export type ConfigNumberKey = keyof typeof CONFIG_NUMBER_BOUNDS
 
 const CONFIG_NUMBER_KEYS = Object.keys(CONFIG_NUMBER_BOUNDS) as ConfigNumberKey[]
 
-const CONFIG_BOOLEAN_KEYS = ['dailyCompileEnabled', 'consolidateEnabled', 'logApiRequests'] as const
+const CONFIG_BOOLEAN_KEYS = ['dailyCompileEnabled', 'consolidateEnabled', 'logApiRequests', 'injectDefaultEnabled'] as const
 
 /** 可调布尔字段名。 */
 export type ConfigBooleanKey = (typeof CONFIG_BOOLEAN_KEYS)[number]

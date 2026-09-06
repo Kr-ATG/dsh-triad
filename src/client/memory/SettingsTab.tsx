@@ -209,6 +209,8 @@ export function SettingsTab({ config, busy = false, t, onPatch, onReset, listMod
     <div className={css.settingsBody}>
       <section className={css.settingsGroup}>
         <h4 className={css.settingsGroupTitle}>{t('settingsGroupInject')}</h4>
+        {/* 缺字段按「开」显示：旧 host 不回该键时，实际默认值就是开。 */}
+        <SwitchRow label={t('injectDefaultOn')} hint={t('injectDefaultHint')} value={config.injectDefaultEnabled !== false} disabled={busy} onChange={setBool('injectDefaultEnabled')} />
         <NumberRow label={t('cfgInjectTopK')} hint={t('cfgInjectTopKHint')} field="injectTopK" value={num('injectTopK')} t={t} onCommit={setNum('injectTopK')} />
         <NumberRow label={t('cfgInjectTokenBudget')} field="injectTokenBudget" value={num('injectTokenBudget')} t={t} onCommit={setNum('injectTokenBudget')} />
       </section>
