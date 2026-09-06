@@ -186,6 +186,33 @@ function CountBadge({ value, inline = false, hint }: { value: number; inline?: b
   return <span className={cls} title={hint !== undefined ? `${hint} · ${exact}` : exact}>{formatCount(value)}</span>
 }
 
+/**
+ * 分类计数（面板本地口径）：只数活跃条目。
+ *
+ * 不用 host 的 /tags —— 它与 /list 的过滤口径不一致（/list 默认排除已废弃，
+ * /tags 不排除），于是出现「踩坑 1」点开却是「共 0 条记忆」。计数由面板已经
+ * 拿到的活跃条目集算出，host 半身没重启时也立刻正确。
+ */
+function countTagsFromEntries(entries: MemoryEntryView[]): Array<{ tag: string; count: number }> {
+  const counts = new Map<string, number>()
+  for (const entry of entries) {
+    if (entry.deprecated === true) continue
+    for (const tagName of entry.tags) counts.set(tagName, (counts.get(tagName) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
+    .map(([tagName, count]) => ({ tag: tagName, count }))
+}
+
+/** 用活跃条目集重算项目计数（同口径：已废弃的不算）。 */
+function recountProjects(projects: ProjectView[], entries: MemoryEntryView[]): ProjectView[] {
+  if (projects.length === 0) return projects
+  return projects.map(project => {
+    const owned = entries.filter(entry => entry.scope === 'project' && entry.projectHash === project.hash)
+    return { ...project, entryCount: owned.length, pinnedCount: owned.filter(entry => entry.pinned).length }
+  })
+}
+
 /** 分割标签输入（逗号/空格/中文逗号）。 */
 function splitTags(raw: string): string[] {
   return raw.split(/[,，\s]+/).map(tag => tag.trim()).filter(Boolean).slice(0, 8)
@@ -516,6 +543,8 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
   const [tag, setTag] = useState('')
   const [state, setState] = useState<ViewState>({ status: 'loading' })
   const [allTags, setAllTags] = useState<Array<{ tag: string; count: number }>>([])
+  // 无筛选的活跃条目集（分类 / 项目计数的本地口径来源）。
+  const [activePool, setActivePool] = useState<MemoryEntryView[] | null>(null)
   const [summary, setSummary] = useState<MemorySummaryResponse | null>(null)
   const [changes, setChanges] = useState<ChangeView[]>([])
   const [changeRange, setChangeRange] = useState<ChangeRange>('all')
@@ -592,7 +621,10 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
       const scopeParam = scope === 'all' ? undefined : scope === 'global' ? 'global' : 'project'
       const projectParam = scope.startsWith('project:') ? scope.slice('project:'.length) : undefined
       const isTrash = tabRef.current === 'trash'
-      const [list, tagsRes] = await Promise.all([
+      // 当前这次请求本身就是「无筛选」时，list 即活跃条目集，不必再拉一遍。
+      const unfiltered = scopeParam === undefined && projectParam === undefined
+        && tag === '' && debouncedQ === '' && !isTrash
+      const [list, poolRes] = await Promise.all([
         current.list({
           scope: scopeParam,
           project: projectParam,
@@ -600,10 +632,12 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
           tag: tag !== '' ? tag : undefined,
           includeDeprecated: isTrash,
         }),
-        current.tags(),
+        unfiltered ? Promise.resolve(null) : current.list({}),
       ])
+      const pool = (unfiltered ? list.entries : poolRes?.entries ?? []).filter(entry => entry.deprecated !== true)
       setState({ status: 'ready', snapshot: list })
-      setAllTags(tagsRes.tags)
+      setActivePool(pool)
+      setAllTags(countTagsFromEntries(pool))
     } catch (loadError) {
       setState({ status: 'error' })
       setError(loadError instanceof Error ? loadError.message : String(loadError))
@@ -996,7 +1030,11 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
   // ── 渲染数据 ─────────────────────────────────────────────────────────
 
   const snapshot = state.status === 'ready' ? state.snapshot : null
-  const projects: ProjectView[] = snapshot?.projects ?? []
+  /** 项目列表：计数按活跃条目重算（见 countTagsFromEntries 处的口径说明）。 */
+  const projects: ProjectView[] = useMemo(
+    () => (activePool === null ? snapshot?.projects ?? [] : recountProjects(snapshot?.projects ?? [], activePool)),
+    [snapshot, activePool],
+  )
   /** 当前视图的条目集（回收站=只保留已废弃）。 */
   const filtered = useMemo(() => {
     const entries = snapshot?.entries ?? []
