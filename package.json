@@ -58,7 +58,8 @@
   "scripts": {
     "build": "node build.mjs",
     "smoke": "node scripts/smoke-client.mjs",
-    "smoke:host": "node scripts/smoke-host.mjs"
+    "smoke:host": "node scripts/smoke-host.mjs",
+    "test": "node scripts/test-skill-manager.mjs && node scripts/test-skill-toggles.mjs"
   },
   "engines": {
     "node": ">=22"

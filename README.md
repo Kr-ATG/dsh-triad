@@ -77,6 +77,19 @@ dsh plugin --profile web remove dsh-triad
   三分之一的小窗），工具条上可切**三档字号**（13.5 / 15 / 17px）与**全屏查看**，偏好写
   localStorage、下次打开自动恢复；正文按 em 缩放、标题走真实层级（`#` → h1），
   左侧文件树 252px 并高亮当前文件。
+- **技能身份**：一个技能有两个名字 —— 目录名（文件系统身份）与 `SKILL.md` 的 `name`
+  （DSH 内核调用用的规范名）。面板、账本、开关一律以规范名为准，同时带出目录名；
+  读到历史上按目录名记的账本条目会**自愈**成规范名（`GET /list` 顺带改写 `.bundles.json`）。
+  删除与查看文件两种名字都能定位，删除会把两个技能根下的同名目录一并清掉。
+- **空技能包不再隐身**：0 成员的包（刚建的、成员被删光的）留在列表里并默认展开，
+  给出「上传技能到此包」引导；账本里指向已删除技能的条目显示「N 个技能已不存在」
+  并提供一键清理。旧实现把 0 成员的包一律过滤掉，建完包就像没建成。
+- **导入**：拖整个技能文件夹不再多嵌一层目录（旧实现写成 `skill/my-skill/SKILL.md`，
+  技能扫不到、面板里彻底消失）；Windows 打的反斜杠 zip 能认出 `SKILL.md`；目录名统一成
+  面板里填的名字并同步改写 `SKILL.md` 的 `name`（弹窗里会预告这次改写），
+  保证「目录名 = 技能名 = 账本键」三者一致。
+- **操作回执**：安装/删除/归组/改名/开关的成败统一走面板右下角提示条（带入场与呼吸光点）。
+  旧版把失败写进只在「添加技能」弹窗里渲染的字段，删除失败时面板上毫无反应。
 - **MCP**：MCP Server 管理——添加/启停/会话自启动（localStorage 持久化）、
   **推荐 MCP Server 目录**（`GET /api/mcp-recommended`：官方 modelcontextprotocol/servers
   + 社区 MCP Registry 合并去重，离线兜底内置清单，5 分钟缓存）、联网搜索
@@ -98,6 +111,10 @@ dsh plugin --profile web remove dsh-triad
 
 > 技能在 webui 里原本是**两个独立 host 模块**（`skill-manager` 与 `skill-toggles`），
 > 缺了后者技能面板的「Agent 预设」筛选条就会全部 404。这里两个都在。
+>
+> 两个模块共用同一套身份解析：`skill-toggles` 定位技能目录时先按目录名直取，
+> 取不到再按 `SKILL.md` 的 `name` 扫一遍两个根 —— 否则目录名不一致的技能，
+> 面板开关点了打不动、整包开关还会静默漏掉成员。
 
 ---
 
@@ -214,6 +231,11 @@ node scripts/smoke-host.mjs
 
 # 浏览器半身：独立可跑
 node scripts/smoke-client.mjs
+
+# 技能管理回归（临时目录里跑，不碰真实 ~/.agents/skills）
+pnpm test            # = 下面两条
+node scripts/test-skill-manager.mjs   # 身份解析 / 账本自愈 / 导入 / 删除 / 越界名
+node scripts/test-skill-toggles.mjs   # 目录名≠规范名时的单个与整包开关
 ```
 
 想复现「已安装位置」的真实条件，可以把 `lib/` 同步到

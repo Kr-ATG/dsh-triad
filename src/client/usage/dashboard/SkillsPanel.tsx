@@ -27,6 +27,8 @@ interface SkillInfo {
   files?: string[]
   fileCount?: number
   compatibility?: string
+  /** 技能目录名：与 name 可以不一致（手工拷目录、改名导入），删除/查看走它。 */
+  dir?: string
 }
 
 interface BundleInfo {
@@ -34,6 +36,8 @@ interface BundleInfo {
   name: string
   skillCount: number
   skills: SkillInfo[]
+  /** 账本里指向已消失技能的条目（面板给「清理失效引用」入口）。 */
+  missingSkills?: string[]
 }
 
 interface SkillSnapshot {
@@ -207,6 +211,22 @@ const SKILL_ZH: Record<string, string> = {
   // 分组行 / 更多菜单 / 分页
   nameAsc: '升序', nameDesc: '降序', moreActions: '更多操作',
   totalItems: '共 {n} 条', pageSize: '{n} 条/页', pagePrev: '上一页', pageNext: '下一页',
+  // 空技能包 / 失效引用 / 操作反馈
+  bundleEmptyTitle: '这个技能包还是空的',
+  bundleEmptyHint: '上传技能时在这里选它归组，或从散装技能卡片点「+」归入。',
+  bundleUploadHere: '上传技能到此包',
+  bundleMissingN: '账本里有 {n} 个技能已不存在',
+  bundlePrune: '清理失效引用',
+  pruned: '已清理失效引用',
+  installedOk: '已安装技能「{name}」',
+  deletedOk: '已删除技能「{name}」',
+  removedOk: '已从技能包移出「{name}」',
+  assignOk: '已把「{name}」归入技能包',
+  bundleCreated: '已创建技能包「{name}」，上传技能时可直接归入它',
+  bundleDeleted: '已删除技能包「{name}」，其中的技能变为散装',
+  opFailed: '操作失败：{label} — {message}',
+  installNameRewrite: 'SKILL.md 里写的是「{meta}」，安装时会统一改成「{name}」（目录名与技能名保持一致）。',
+  deleteSkillDirNote: '（技能目录「{dir}」与技能名不同，会一并删除）',
 }
 
 function skillT(key: string, params?: Record<string, string | number>): string {
@@ -1718,7 +1738,7 @@ const skillApi = {
     skillRequest(`/bundles/${encodeURIComponent(bundleId)}/skills`, { method: 'PUT', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify({ skillNames }) }),
   deleteSkill: (name: string): Promise<Record<string, never>> =>
     skillRequest(`/skills/${encodeURIComponent(name)}`, { method: 'DELETE', headers: { accept: 'application/json' } }),
-  installSkill: (input: InstallInput): Promise<Record<string, never>> =>
+  installSkill: (input: InstallInput): Promise<{ name?: string; dir?: string; renamed?: boolean }> =>
     skillRequest('/skills', { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify(input) }),
   /** 技能目录健康检查：只读扫描（缺 SKILL.md / frontmatter 无效 / 名称不一致 / 账本悬挂引用）。 */
   health: (): Promise<HealthReport> =>
@@ -2109,6 +2129,19 @@ const css = {
   presetHint: 'skm-preset-hint',
   presetHintText: 'skm-preset-hint-text',
   presetReset: 'skm-preset-reset',
+  // 空技能包 / 失效引用 / 面板级提示条
+  toastStack: 'skm-toast-stack',
+  toast: 'skm-toast',
+  toastOk: 'skm-toast-ok',
+  toastErr: 'skm-toast-err',
+  toastDot: 'skm-toast-dot',
+  bundleEmpty: 'skm-bundle-empty',
+  bundleEmptyTitle: 'skm-bundle-empty-title',
+  bundleEmptyHint: 'skm-bundle-empty-hint',
+  bundleEmptyBtn: 'skm-bundle-empty-btn',
+  bundleMissing: 'skm-bundle-missing',
+  bundleMissingBtn: 'skm-bundle-missing-btn',
+  installHint: 'skm-install-hint',
 }
 
 const STYLE_ID = 'dsh-skill-manager-styles'
@@ -2726,6 +2759,35 @@ const SHEET = `
 .skm-preset-reset{flex:none;appearance:none;border:none;border-radius:12px;padding:2px 10px;font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary,#999);background:transparent;cursor:pointer;font-family:inherit}
 .skm-preset-reset:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,.06));color:var(--dsw-alias-label-primary,#eee)}
 
+/* ── 面板级提示条：删除/归组/改名/安装的成败都要让用户看见 ── */
+.skm-toast-stack{position:absolute;right:18px;bottom:18px;z-index:6;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
+.skm-toast{display:inline-flex;align-items:center;gap:8px;max-width:min(460px,72vw);box-sizing:border-box;padding:8px 14px;border-radius:10px;font-size:12.5px;line-height:18px;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.1));background:var(--dsw-static-neutral-bluish-00,#fff);color:var(--dsw-alias-label-primary,#222);box-shadow:var(--dsw-shadow-lv2,0 6px 22px rgba(0,0,0,.16));animation:skm-toast-in 260ms cubic-bezier(.2,.9,.25,1) both}
+.skm-toast-ok{border-color:rgba(35,160,90,.38);color:#1c7a45}
+.skm-toast-err{border-color:rgba(226,80,64,.42);color:#b3271c}
+.skm-toast-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor;animation:skm-toast-ping 1.7s ease-out infinite}
+@keyframes skm-toast-in{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes skm-toast-ping{0%{box-shadow:0 0 0 0 currentColor;opacity:.9}70%{box-shadow:0 0 0 7px rgba(0,0,0,0);opacity:.35}100%{box-shadow:0 0 0 0 rgba(0,0,0,0);opacity:1}}
+body[data-ds-dark-theme] .skm-toast{background:var(--dsw-static-neutral-bluish-850,#2c2c2e)}
+body[data-ds-dark-theme] .skm-toast-ok{color:#6ee7a8}
+body[data-ds-dark-theme] .skm-toast-err{color:#ff8a7a}
+
+/* ── 空技能包：可见 + 可操作（旧实现把 0 成员的包整段过滤掉，建完包就「消失」） ── */
+.skm-bundle-empty{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-sizing:border-box;margin:2px 0 6px;padding:14px 16px;border:1px dashed var(--dsw-alias-border-l2,rgba(0,0,0,.18));border-radius:12px;background:var(--dsw-alias-bg-layer-1,rgba(0,0,0,.02));animation:skm-fade-up 260ms ease both}
+.skm-bundle-empty-title{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary,#333)}
+.skm-bundle-empty-hint{flex:1 1 200px;min-width:160px;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary,#8b9099)}
+.skm-bundle-empty-btn{flex:none;display:inline-flex;align-items:center;gap:6px;appearance:none;border:1px solid var(--dsw-alias-state-business-primary,#4176e6);border-radius:9px;padding:5px 12px;font-size:12px;line-height:18px;font-family:inherit;cursor:pointer;color:var(--dsw-alias-state-business-primary,#4176e6);background:transparent;transition:background 160ms ease,color 160ms ease,transform 160ms ease,box-shadow 160ms ease}
+.skm-bundle-empty-btn:hover{background:var(--dsw-alias-state-business-primary,#4176e6);color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(65,118,230,.28)}
+.skm-bundle-empty-btn:active{transform:translateY(0)}
+@keyframes skm-fade-up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── 账本失效引用：明说「包里有指向已删除技能的条目」并一键清理 ── */
+.skm-bundle-missing{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 6px;padding:8px 12px;border-radius:10px;border:1px solid rgba(240,150,40,.38);background:rgba(240,150,40,.09);font-size:12px;line-height:18px;color:#8a5a12;animation:skm-fade-up 260ms ease both}
+.skm-bundle-missing code{padding:1px 6px;border-radius:5px;background:rgba(240,150,40,.16);font-size:11.5px}
+.skm-bundle-missing-btn{appearance:none;border:1px solid rgba(240,150,40,.55);background:transparent;border-radius:8px;padding:2px 9px;font-size:11.5px;line-height:18px;font-family:inherit;cursor:pointer;color:inherit;transition:background 140ms ease,transform 140ms ease}
+.skm-bundle-missing-btn:hover{background:rgba(240,150,40,.2);transform:translateY(-1px)}
+body[data-ds-dark-theme] .skm-bundle-missing{color:#f0c48a}
+.skm-install-hint{margin:2px 0 0;font-size:11.5px;line-height:17px;color:var(--dsw-alias-label-tertiary,#8b9099)}
+
 /* ── 移动端：侧栏收窄/隐藏、查看器上下堆叠、卡片网格单列 ───────── */
 @media (max-width: 767.98px) {
   .skm-viewer-modal,.skm-viewer-modal-full{width:calc(100vw - 48px)}
@@ -2756,6 +2818,10 @@ const SHEET = `
   .skm-toggle{transition:none}
   .skm-tag{transition:none}
   .skm-skill-copy,.skm-skill-icon,.skm-skill-foot-icon,.skm-icon-action,.skm-bundle,.skm-hub-item,.skm-tool-button,.skm-banner,.skm-banner-btn,.skm-view-btn,.skm-drop-item,.skm-assign-card{transition:none}
+  .skm-toast{animation:none}
+  .skm-toast-dot{animation:none}
+  .skm-bundle-empty,.skm-bundle-missing{animation:none}
+  .skm-bundle-empty-btn,.skm-bundle-missing-btn{transition:none}
 }
 `
 
@@ -3231,13 +3297,27 @@ function SkillCard({ skill, bundleId, bundleName, enabled, lockedReason, scopeLa
 
 /** ---------------------------------------------------------------- 面板 */
 
-type ConfirmState = { kind: 'bundle'; bundle: BundleInfo } | { kind: 'skill'; name: string }
+type ConfirmState =
+  | { kind: 'bundle'; bundle: BundleInfo }
+  | { kind: 'skill'; name: string; dir?: string }
 type InstallState =
   | { archive: true; name: string; data: string; folderName: string }
   | { archive?: false; files: CollectedFile[]; folderName: string }
 type ViewerState = { skill: SkillInfo; file: string; loading: boolean; error?: string; content?: string }
 
 const SKILL_NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/
+
+/** 从 SKILL.md 文本里取 frontmatter 的 name（安装弹窗预览真实技能名用）。 */
+function frontmatterName(text: string): string | null {
+  const lines = text.split(/\r?\n/).slice(0, 80)
+  if ((lines[0] ?? '').trim() !== '---') return null
+  for (const line of lines.slice(1)) {
+    if (line.trim() === '---') break
+    const pair = /^\s*name\s*:\s*(.+?)\s*$/.exec(line)
+    if (pair !== null) return (pair[1] ?? '').replace(/^["']|["']$/g, '')
+  }
+  return null
+}
 
 export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMouseEnter, onCardMouseLeave }: { onClose: () => void; closing?: boolean; anchor?: PopoverAnchor | null; onCardMouseEnter?: () => void; onCardMouseLeave?: () => void }): JSX.Element {
   ensureStyles()
@@ -3270,6 +3350,38 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
   const [installBundleId, setInstallBundleId] = useState<string | undefined>(undefined)
   const [installing, setInstalling] = useState(false)
   const [installError, setInstallError] = useState<string | null>(null)
+  /**
+   * 面板级提示条。旧实现把所有失败都塞进 installError，而它只在「添加技能」弹窗里
+   * 渲染 —— 于是删除技能、归组、改名、开关失败时面板上什么都不显示，用户只看到
+   * 「点了没反应」。成败反馈统一走这里。
+   */
+  const [toasts, setToasts] = useState<Array<{ id: number; tone: 'ok' | 'err'; text: string }>>([])
+  const toastTimers = useRef<number[]>([])
+  const pushToast = (tone: 'ok' | 'err', text: string): void => {
+    const id = Date.now() + Math.random()
+    setToasts((current) => [...current.slice(-2), { id, tone, text }])
+    const timer = window.setTimeout(() => {
+      setToasts((current) => current.filter((item) => item.id !== id))
+    }, tone === 'err' ? 6400 : 2800)
+    toastTimers.current.push(timer)
+  }
+  /** 统一失败提示：label 说清是哪一步，message 用 host 原文。 */
+  const failToast = (label: string, error: unknown): void => {
+    pushToast('err', skillT('opFailed', { label, message: error instanceof Error ? error.message : String(error) }))
+  }
+  /** 文件夹导入时 SKILL.md 里写的技能名：与用户填的名字不一致时提前说明会改写。 */
+  const [installMetaName, setInstallMetaName] = useState<string | null>(null)
+  useEffect(() => {
+    if (install === null || install.archive === true) { setInstallMetaName(null); return undefined }
+    const entry = install.files.find((item) => item.path === 'SKILL.md')
+    if (entry === undefined) { setInstallMetaName(null); return undefined }
+    let current = true
+    void entry.file.text().then((text) => {
+      if (!current) return
+      setInstallMetaName(frontmatterName(text))
+    }, () => { if (current) setInstallMetaName(null) })
+    return () => { current = false }
+  }, [install])
   const [dropActive, setDropActive] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   // 技能/技能包开关状态（skillName → enabled；bundleId → enabled）
@@ -3462,9 +3574,10 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reload])
 
-  // 卸载时清掉改名高亮定时器，避免卸载后 setState。
+  // 卸载时清掉改名高亮与提示条定时器，避免卸载后 setState。
   useEffect(() => () => {
     if (renamedTimer.current !== null) window.clearTimeout(renamedTimer.current)
+    for (const timer of toastTimers.current) window.clearTimeout(timer)
   }, [])
 
   /** 指南/MCP 解释浮层的位置：贴着面板卡片右缘内侧（面板铺满主区，外侧已无空间）。 */
@@ -3494,7 +3607,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
       // 开关只改 frontmatter,技能列表结构不变:静默同步即可,不重载面板。
       refreshTogglesOnly()
     } catch (error) {
-      setInstallError(skillT('toggleFailed', { message: error instanceof Error ? error.message : String(error) }))
+      pushToast('err', skillT('toggleFailed', { message: error instanceof Error ? error.message : String(error) }))
     } finally {
       setToggling((current) => {
         const next = new Set(current)
@@ -3627,9 +3740,10 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
       if (bundle === undefined) throw new Error('bundle not found')
       await skillApi.setBundleSkills(bundleId, [...bundle.skills.map((s) => s.name), skill.name])
       setAssignTarget(null)
+      pushToast('ok', skillT('assignOk', { name: skill.name }))
       refresh()
     } catch (error) {
-      setInstallError(error instanceof Error ? error.message : String(error))
+      failToast('归入技能包', error)
     }
   }
 
@@ -3697,8 +3811,9 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     setInstalling(true)
     setInstallError(null)
     try {
+      let installed: { name?: string } = {}
       if (install.archive === true) {
-        await skillApi.installSkill({
+        installed = await skillApi.installSkill({
           archive: install.data,
           description: installDescription.trim(),
           ...installBundleId === undefined ? {} : { bundleId: installBundleId },
@@ -3708,13 +3823,15 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
           path,
           data: await fileToBase64(file),
         })))
-        await skillApi.installSkill({
+        installed = await skillApi.installSkill({
           skillName: installName.trim(),
           description: installDescription.trim(),
           ...installBundleId === undefined ? {} : { bundleId: installBundleId },
           files,
         })
       }
+      // 名字以 host 落地的规范名为准：目录名与技能名不一致时，用户看得到装成了什么。
+      pushToast('ok', skillT('installedOk', { name: installed.name ?? installName.trim() }))
       setInstall(null)
       setInstallName('')
       setInstallDescription('')
@@ -3733,12 +3850,14 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     if (creatingBundle || newBundleName.trim() === '') return
     setCreatingBundle(true)
     try {
-      await skillApi.createBundle(newBundleName.trim())
+      const created = newBundleName.trim()
+      await skillApi.createBundle(created)
       setNewBundleName('')
       setNewBundleOpen(false)
+      pushToast('ok', skillT('bundleCreated', { name: created }))
       refresh()
     } catch (error) {
-      setInstallError(error instanceof Error ? error.message : String(error))
+      failToast('新建技能包', error)
     } finally {
       setCreatingBundle(false)
     }
@@ -3758,7 +3877,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
       setRenameTarget(null)
       refresh()
     } catch (error) {
-      setInstallError(error instanceof Error ? error.message : String(error))
+      failToast('重命名技能包', error)
     } finally {
       setRenaming(false)
     }
@@ -3767,13 +3886,18 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
   const confirmDelete = async (): Promise<void> => {
     if (confirm === null || confirming) return
     setConfirming(true)
+    const label = confirm.kind === 'bundle' ? confirm.bundle.name : confirm.name
     try {
       if (confirm.kind === 'bundle') await skillApi.deleteBundle(confirm.bundle.id)
       else await skillApi.deleteSkill(confirm.name)
       setConfirm(null)
+      pushToast('ok', confirm.kind === 'bundle'
+        ? skillT('bundleDeleted', { name: label })
+        : skillT('deletedOk', { name: label }))
       refresh()
     } catch (error) {
-      setInstallError(error instanceof Error ? error.message : String(error))
+      // 旧实现把失败写进只在安装弹窗里渲染的 installError：删除失败时面板上毫无反应。
+      failToast(confirm.kind === 'bundle' ? '删除技能包' : '删除技能', error)
     } finally {
       setConfirming(false)
     }
@@ -3785,10 +3909,34 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
       const bundle = state.snapshot.bundles.find((candidate) => candidate.id === bundleId)
       if (bundle === undefined) return
       await skillApi.setBundleSkills(bundleId, bundle.skills.map((skill) => skill.name).filter((skillName) => skillName !== name))
+      pushToast('ok', skillT('removedOk', { name }))
       refresh()
     } catch (error) {
-      setInstallError(error instanceof Error ? error.message : String(error))
+      failToast('移出技能包', error)
     }
+  }
+
+  /** 清理账本里指向已删除技能的条目（技能包显示「N 个失效引用」时用）。 */
+  const pruneBundle = async (bundle: BundleInfo): Promise<void> => {
+    try {
+      // 必须回到未过滤的快照取成员：视图里的 bundle 可能已被搜索/状态筛选裁掉过。
+      const full = state.status === 'ready'
+        ? (state.snapshot.bundles.find((candidate) => candidate.id === bundle.id) ?? bundle)
+        : bundle
+      await skillApi.setBundleSkills(bundle.id, full.skills.map((skill) => skill.name))
+      pushToast('ok', skillT('pruned'))
+      refresh()
+    } catch (error) {
+      failToast('清理失效引用', error)
+    }
+  }
+
+  /** 从空技能包的引导按钮直接进入「添加技能」，并把归组预选成它。 */
+  const openInstallFor = (bundleId: string): void => {
+    setInstall(null)
+    setInstallError(null)
+    setInstallBundleId(bundleId)
+    setAddOpen(true)
   }
 
   const bundles = state.status === 'ready' ? state.snapshot.bundles : []
@@ -3823,10 +3971,16 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     sortedSkills(list.filter((skill) =>
       qMatch(skill)
       && statusMatch(skill)))
-  /** 全量筛选结果（批量操作作用于全部）。 */
+  /**
+   * 全量筛选结果（批量操作作用于全部）。
+   * 空技能包必须留在列表里：旧实现一律 filter(skills.length > 0)，于是新建的包、
+   * 以及账本按目录名记账导致成员解析不到的包，都会从面板上凭空消失 —— 既看不到
+   * 也点不到，没法再往里归技能。只有真正带筛选条件时才按命中情况隐藏。
+   */
+  const filtering = q !== '' || statusFilter !== 'all'
   const visibleBundleAll = (sourceFilter === 'loose' ? [] : bundles)
     .map((bundle) => ({ ...bundle, skills: filteredSkills(bundle.skills) }))
-    .filter((bundle) => bundle.skills.length > 0)
+    .filter((bundle) => bundle.skills.length > 0 || (bundle.skillCount === 0 && !filtering))
   const visibleLooseAll = sourceFilter === 'bundles' ? [] : filteredSkills(loose)
   const totalSkills = bundles.reduce((n, bundle) => n + bundle.skillCount, 0) + loose.length
   const bundleCount = bundles.length
@@ -3854,6 +4008,9 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     : confirm.kind === 'bundle'
       ? t('deleteBundleConfirm', { name: confirm.bundle.name })
       : t('deleteSkillConfirm', { name: confirm.name })
+        // 目录名与技能名不一致时说明白：删的是那个目录，避免用户以为删错东西。
+          + (confirm.kind === 'skill' && confirm.dir !== undefined && confirm.dir !== confirm.name
+            ? t('deleteSkillDirNote', { dir: confirm.dir }) : '')
 
   return (
     <PopoverShell
@@ -4165,16 +4322,20 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                     const bundleEnabled = bundleEnabledIn(bundle)
                     const bundleToggling = toggling.has(`bundle:${bundle.id}`)
                     const gridClass = viewMode === 'list' ? `${css.skillGrid} ${css.skillGridList}` : css.skillGrid
+                    const missing = bundle.missingSkills ?? []
+                    const emptyBundle = bundle.skillCount === 0
+                    // 空包默认展开显示引导：折叠着只剩一行标题，用户会以为包丢了。
+                    const openView = open2 || emptyBundle
                     return (
-                      <section key={bundle.id} className={css.hubSection} data-open={open2 ? 'true' : undefined}>
+                      <section key={bundle.id} className={css.hubSection} data-open={openView ? 'true' : undefined} data-empty={emptyBundle ? 'true' : undefined}>
                         <header
                           className={css.bundleRowOuter}
-                          data-open={open2 ? 'true' : undefined}
+                          data-open={openView ? 'true' : undefined}
                         >
                           <button
                             type="button"
                             className={css.bundleRow}
-                            aria-expanded={open2}
+                            aria-expanded={openView}
                             onClick={() => { toggleExpanded(bundle.id) }}
                           >
                             <span className={css.bundleIcon} aria-hidden="true"><FolderBlueIcon size={17} /></span>
@@ -4254,10 +4415,26 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                             <Button variant="outline" type="button" disabled={renaming} onClick={() => { setRenameTarget(null) }}>{t('cancel')}</Button>
                           </form>
                         )}
-                        {open2 && (
+                        {missing.length > 0 && (
+                          <div className={css.bundleMissing} role="status">
+                            <span>{t('bundleMissingN', { n: missing.length })}</span>
+                            <code>{missing.join('、')}</code>
+                            <button type="button" className={css.bundleMissingBtn} onClick={() => { void pruneBundle(bundle) }}>
+                              {t('bundlePrune')}
+                            </button>
+                          </div>
+                        )}
+                        {openView && (
                           <ul className={gridClass} data-renamed={renamedFlash === bundle.id ? 'true' : undefined}>
                             {bundle.skills.length === 0 ? (
-                              <li className={css.status}>{t('bundleNoSkills')}</li>
+                              <li className={css.bundleEmpty}>
+                                <span className={css.bundleEmptyTitle}>{t('bundleEmptyTitle')}</span>
+                                <span className={css.bundleEmptyHint}>{t('bundleEmptyHint')}</span>
+                                <button type="button" className={css.bundleEmptyBtn} onClick={() => { openInstallFor(bundle.id) }}>
+                                  <CloudUpIcon size={14} />
+                                  {t('bundleUploadHere')}
+                                </button>
+                              </li>
                             ) : bundle.skills.map((skill, index) => (
                               <SkillCard key={skill.name} skill={skill} bundleId={bundle.id} bundleName={bundle.name}
                                 enabled={skillEnabledIn(skill.name)}
@@ -4267,7 +4444,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                                 onToggle={toggleSkill}
                                 onView={openViewer}
                                 onRemove={(s) => { void removeFromBundle(bundle.id, s.name) }}
-                                onDelete={(s) => { setConfirm({ kind: 'skill', name: s.name }) }} />
+                                onDelete={(s) => { setConfirm({ kind: 'skill', name: s.name, dir: s.dir }) }} />
                             ))}
                           </ul>
                         )}
@@ -4304,7 +4481,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                               onToggle={toggleSkill}
                               onView={openViewer}
                               onAssign={(s) => { setAssignTarget(s) }}
-                              onDelete={(s) => { setConfirm({ kind: 'skill', name: s.name }) }} />
+                              onDelete={(s) => { setConfirm({ kind: 'skill', name: s.name, dir: s.dir }) }} />
                           ))}
                         </ul>
                       )}
@@ -4320,6 +4497,17 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
         </div>
       </div>
       </PshBody>
+      {/* 操作回执：安装/删除/归组/开关的成败都从这里冒出来（面板右下角，自动收起） */}
+      {toasts.length > 0 && (
+        <div className={css.toastStack} role="status" aria-live="polite">
+          {toasts.map((item) => (
+            <span key={item.id} className={`${css.toast} ${item.tone === 'err' ? css.toastErr : css.toastOk}`} data-tone={item.tone}>
+              <i className={css.toastDot} aria-hidden="true" />
+              {item.text}
+            </span>
+          ))}
+        </div>
+      )}
       {/* 快速上手指南 / MCP 解释：面板右侧悬浮卡（portal 到 body，不压缩面板） */}
       {guideOpen && guidePos !== null && (
         <GuidePanel t={t} onClose={() => { setGuideOpen(false) }} left={guidePos.left} top={guidePos.top} height={guidePos.height} />
@@ -4429,6 +4617,9 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
               </span>
             </div>
             {install.archive !== true && nameInvalid && <p className={css.error} role="alert">{t('installNameInvalid')}</p>}
+            {install.archive !== true && !nameInvalid && trimmedName !== '' && installMetaName !== null && installMetaName !== trimmedName && (
+              <p className={css.installHint}>{t('installNameRewrite', { meta: installMetaName, name: trimmedName })}</p>
+            )}
             <div className={css.installActions}>
               <Button variant="primary" type="submit" disabled={installing || (install.archive !== true && (trimmedName === '' || nameInvalid))}>{t('installConfirm')}</Button>
               <Button variant="outline" type="button" disabled={installing} onClick={() => { setInstall(null); setAddOpen(false) }}>{t('installCancel')}</Button>

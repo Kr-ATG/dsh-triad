@@ -252,8 +252,78 @@ async function skillDirUnder(root: string, skillName: string): Promise<string | 
 
 /** Locate a skill directory across both roots (managed first, then dsh). */
 async function locateSkillDir(skillName: string): Promise<string | undefined> {
-  return await skillDirUnder(managedRoot(), skillName)
+  const direct = await skillDirUnder(managedRoot(), skillName)
     ?? await skillDirUnder(dshRoot(), skillName)
+  if (direct !== undefined) return direct
+  // 目录名与 frontmatter name 可以不一致（手工拷目录、改名导入）：面板与账本给的
+  // 往往是规范名，只按目录名找就定位不到，开关点了没反应。
+  return await skillDirByFrontmatterName(skillName)
+}
+
+/** 按 SKILL.md 的 frontmatter name 扫两个根，找技能的真实目录。 */
+async function skillDirByFrontmatterName(skillName: string): Promise<string | undefined> {
+  for (const root of [managedRoot(), dshRoot()]) {
+    let entries: string[] = []
+    try {
+      entries = (await readdir(root, { withFileTypes: true }))
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name)
+    } catch {
+      continue
+    }
+    for (const dir of entries) {
+      const name = await canonicalNameOf(root, dir)
+      if (name !== undefined && name === skillName) return join(root, dir)
+    }
+  }
+  return undefined
+}
+
+/** 一个技能目录的规范名（frontmatter name，缺省回落目录名）；非技能目录返回 undefined。 */
+async function canonicalNameOf(root: string, dir: string): Promise<string | undefined> {
+  try {
+    const raw = await readFile(join(root, dir, SKILL_FILE), "utf8")
+    const field = splitFrontmatter(raw).fields.find(item => item.key === "name")?.value
+    return field !== undefined && field !== "" ? field : dir
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * 技能别名索引：目录名与 frontmatter name 都指向规范名。
+ * .bundles.json 历史上混着记过两种名字，整包开关与预设层要先归一。
+ */
+async function skillNameIndex(): Promise<Map<string, string>> {
+  const index = new Map<string, string>()
+  for (const root of [managedRoot(), dshRoot()]) {
+    let entries: string[] = []
+    try {
+      entries = (await readdir(root, { withFileTypes: true }))
+        .filter(entry => entry.isDirectory())
+        .map(entry => entry.name)
+    } catch {
+      continue
+    }
+    for (const dir of entries) {
+      const name = await canonicalNameOf(root, dir)
+      if (name === undefined) continue
+      if (!index.has(dir)) index.set(dir, name)
+      if (!index.has(name)) index.set(name, name)
+    }
+  }
+  return index
+}
+
+/** 账本条目数组 → 规范技能名数组（解析不到的原样保留，交给调用方处理）。 */
+async function canonicalSkillNames(entries: readonly string[]): Promise<string[]> {
+  const index = await skillNameIndex()
+  const names: string[] = []
+  for (const entry of entries) {
+    const name = index.get(entry) ?? entry
+    if (!names.includes(name)) names.push(name)
+  }
+  return names
 }
 
 /** Read a skill's SKILL.md raw text; undefined when missing. */
@@ -378,8 +448,10 @@ async function status(): Promise<{ skills: Record<string, boolean>; bundles: Rec
   }
   const bundles: Record<string, boolean> = {}
   const ledger = await readBundles(managedRoot())
+  const alias = await skillNameIndex()
   for (const record of ledger.bundles) {
-    const states = record.skills.map(skillName => skills[skillName])
+    // 账本条目可能是目录名（历史写入）：先归一到规范名再查状态。
+    const states = record.skills.map(skillName => skills[alias.get(skillName) ?? skillName])
     bundles[record.id] = states.length === 0 || states.every(state => state !== false)
   }
   return { skills, bundles }
@@ -606,7 +678,8 @@ async function handle(ctx: PluginContext, req: IncomingMessage, res: ServerRespo
       const ledger = await readBundles(managedRoot())
       const record = ledger.bundles.find(bundle => bundle.id === bundleId)
       if (record === undefined) throw new Error(`bundle ${JSON.stringify(bundleId)} not found`)
-      const changed = await setPresetSkills(presetId, record.skills, enabled)
+      // 预设层账本按规范名记账：目录名条目要先归一，否则闸门遮不住技能。
+      const changed = await setPresetSkills(presetId, await canonicalSkillNames(record.skills), enabled)
       json(res, 200, { ok: true, preset: presetId, id: bundleId, enabled, changed })
       return
     }
