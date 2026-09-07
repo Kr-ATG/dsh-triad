@@ -38,6 +38,8 @@ interface BundleInfo {
   skills: SkillInfo[]
   /** 账本里指向已消失技能的条目（面板给「清理失效引用」入口）。 */
   missingSkills?: string[]
+  /** 技能包分类（一个包可挂多个）；老账本没有该字段时按未分类处理。 */
+  categories?: string[]
 }
 
 interface SkillSnapshot {
@@ -62,6 +64,13 @@ const SKILL_ZH: Record<string, string> = {
   installNameInvalid: '技能名只能包含小写字母、数字和连字符（a-z 0-9 -）',
   installBundle: '归入 Bundle', installLoose: '不归组（散装）', installConfirm: '安装', installCancel: '取消',
   bundlesTitle: '技能包', bundlesEmpty: '还没有技能包，点「新建 Bundle」创建一个。',
+  // 技能包分类
+  bundleCatTitle: '分类', bundleCatAll: '全部分类', bundleCatNone: '未分类', bundleCatFilterAria: '按分类筛选技能包',
+  bundleCatEdit: '设置分类', bundleCatEditTitle: '「{name}」的分类', bundleCatPlaceholder: '自定义分类，回车添加',
+  bundleCatSaved: '已更新「{name}」的分类', bundleCatTip: '只看「{name}」分类 · 再点一次取消筛选',
+  bundleCatLimit: '一个技能包最多 {n} 个分类', bundleCatDone: '保存', bundleCatAddPreset: '加入「{name}」',
+  bundleCatEmptyHint: '还没分类。点下面的建议分类，或自己写一个 —— 分类只影响这里的查找，不改变技能本身。',
+  bundleCatRemove: '移除分类「{name}」', bundleCatCustom: '自定义分类',
   bundleNoSkills: '还没有技能，可上传或从散装技能中归入。',
   newBundle: '新建技能包', newBundlePlaceholder: '技能包名称', create: '创建', cancel: '取消',
   renameBundlePlaceholder: '新的 Bundle 名称', rename: '重命名', delete: '删除',
@@ -237,6 +246,34 @@ function skillT(key: string, params?: Record<string, string | number>): string {
     for (const k of Object.keys(params)) text = text.split(`{${k}}`).join(String(params[k]))
   }
   return text
+}
+
+/** ---------------------------------------------------------------- 技能包分类 */
+
+/** 建议分类：点一下就挂上；也允许自己写，账本里存的就是字符串本身。 */
+const PRESET_BUNDLE_CATEGORIES = ['开发', '设计', '办公协同', '文档知识', '数据', '自动化', '运维', '其他']
+
+/** 分类筛选里代表「没挂任何分类的包」的哨兵值（不会是合法分类名）。 */
+const UNCATEGORIZED = '\u0000none'
+
+/** 一个技能包最多挂几个分类（与 host 的 CATEGORY_MAX_PER_BUNDLE 对齐）。 */
+const MAX_BUNDLE_CATEGORIES = 8
+
+/** 分类色板：同一分类名恒定同色，明暗主题都靠 color-mix 压底色。 */
+const CATEGORY_PALETTE = ['#4176e6', '#2fa46a', '#e8a33d', '#a05ce6', '#e0645b', '#1fa2b8', '#d9488f', '#7a8b3f']
+
+/** 分类名 → 色值：djb2 哈希取模，稳定、无需查表、新分类自动配色。 */
+function categoryColor(name: string): string {
+  let h = 5381
+  for (let i = 0; i < name.length; i += 1) h = ((h << 5) + h + name.charCodeAt(i)) | 0
+  return CATEGORY_PALETTE[Math.abs(h) % CATEGORY_PALETTE.length] ?? CATEGORY_PALETTE[0]!
+}
+
+/** 分类名单排序：按挂载的包数从多到少，同数按名字。 */
+function sortCategories(counts: Map<string, number>): string[] {
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh'))
+    .map((entry) => entry[0])
 }
 
 /** ---------------------------------------------------------------- 统计卡图标（实心渐变，与设计稿一致） */
@@ -1730,10 +1767,13 @@ const skillApi = {
         if (!body.ok) throw new Error(body.error || 'reset failed')
         return body
       }),
-  createBundle: (name: string): Promise<Record<string, never>> =>
-    skillRequest('/bundles', { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify({ name }) }),
+  createBundle: (name: string, categories: string[] = []): Promise<Record<string, never>> =>
+    skillRequest('/bundles', { method: 'POST', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify({ name, categories }) }),
   renameBundle: (bundleId: string, name: string): Promise<Record<string, never>> =>
     skillRequest(`/bundles/${encodeURIComponent(bundleId)}`, { method: 'PATCH', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify({ name }) }),
+  /** 只改分类的 PATCH：host 侧 name 缺省即保持原值，不必回传包名。 */
+  setBundleCategories: (bundleId: string, categories: string[]): Promise<Record<string, never>> =>
+    skillRequest(`/bundles/${encodeURIComponent(bundleId)}`, { method: 'PATCH', headers: { accept: 'application/json', 'content-type': 'application/json' }, body: JSON.stringify({ categories }) }),
   deleteBundle: (bundleId: string): Promise<Record<string, never>> =>
     skillRequest(`/bundles/${encodeURIComponent(bundleId)}`, { method: 'DELETE', headers: { accept: 'application/json' } }),
   setBundleSkills: (bundleId: string, skillNames: string[]): Promise<Record<string, never>> =>
@@ -1894,6 +1934,27 @@ const css = {
   installForm: 'skm-install-form',
   installRow: 'skm-install-row',
   inlineForm: 'skm-inline-form',
+  // 技能包分类：顶栏胶囊行 / 包名旁标签 / 分类编辑器
+  stackForm: 'skm-stack-form',
+  catChipRow: 'skm-cat-chip-row',
+  catChipLabel: 'skm-cat-chip-label',
+  catChip: 'skm-cat-chip',
+  catChipDot: 'skm-cat-chip-dot',
+  catChipCount: 'skm-cat-chip-count',
+  bundleCats: 'skm-bundle-cats',
+  bundleCatTag: 'skm-bundle-cat-tag',
+  catDot: 'skm-cat-dot',
+  catEditor: 'skm-cat-editor',
+  catEmpty: 'skm-cat-empty',
+  catSelected: 'skm-cat-selected',
+  catSelectedTag: 'skm-cat-selected-tag',
+  catSelectedName: 'skm-cat-selected-name',
+  catRemove: 'skm-cat-remove',
+  catSuggest: 'skm-cat-suggest',
+  catPreset: 'skm-cat-preset',
+  catPresetPlus: 'skm-cat-preset-plus',
+  catInput: 'skm-cat-input',
+  catLimit: 'skm-cat-limit',
   // 块级变体：改名输入行独占一整行（整行内容保留，表单追加在其下方）。
   inlineFormBlock: 'skm-inline-form-block',
   inlineInput: 'skm-inline-input',
@@ -2193,6 +2254,49 @@ const SHEET = `
 .skm-bundle-icon{flex:none;display:inline-flex;align-items:center;justify-content:center;color:var(--dsw-alias-state-business-primary,#3d6be5)}
 .skm-bundle-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .skm-bundle-count{flex:none;font-size:11px;line-height:16px;color:var(--dsw-alias-label-secondary,#61666b);background:var(--dsw-alias-bg-module-platform,#f1f3f5);border-radius:999px;padding:0 8px;white-space:nowrap}
+/* ── 技能包分类：顶栏胶囊筛选 / 包名旁标签 / 分类编辑器 ─────────────────────── */
+/* 分类色一律走 --skm-cat（由 JS 按分类名哈希注入），未设时回落主题蓝，
+   所以「未分类」那颗胶囊自动是中性灰，不必为它单独写一套规则。 */
+.skm-stack-form{display:flex;flex-direction:column;gap:10px}
+.skm-cat-chip-row{flex:1 1 100%;order:3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:2px;animation:skm-cat-row-in 220ms cubic-bezier(.2,.8,.2,1) both}
+@keyframes skm-cat-row-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.skm-cat-chip-label{flex:none;font-size:11.5px;line-height:18px;letter-spacing:.02em;color:var(--dsw-alias-label-tertiary,#81858c)}
+.skm-cat-chip{flex:none;display:inline-flex;align-items:center;gap:5px;height:26px;box-sizing:border-box;padding:0 9px;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.1));border-radius:999px;background:var(--dsw-alias-bg-base,#fff);color:var(--dsw-alias-label-secondary,#61666b);font-family:inherit;font-size:12px;line-height:18px;cursor:pointer;transition:color 150ms ease,border-color 150ms ease,background 150ms ease,box-shadow 200ms ease,transform 120ms ease}
+.skm-cat-chip:hover{border-color:color-mix(in srgb,var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5)) 52%,transparent);color:var(--dsw-alias-label-primary,#1f2430);transform:translateY(-1px)}
+.skm-cat-chip:active{transform:translateY(0) scale(.97)}
+.skm-cat-chip[data-active]{border-color:transparent;background:color-mix(in srgb,var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5)) 15%,transparent);color:var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5));font-weight:600;box-shadow:0 0 0 1px color-mix(in srgb,var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5)) 36%,transparent),0 2px 10px color-mix(in srgb,var(--skm-cat,#3d6be5) 20%,transparent)}
+.skm-cat-chip-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--skm-cat,var(--dsw-alias-label-tertiary,#81858c));transition:box-shadow 200ms ease}
+.skm-cat-chip[data-active] .skm-cat-chip-dot{animation:skm-cat-ping 900ms cubic-bezier(.2,.8,.2,1) 1}
+@keyframes skm-cat-ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--skm-cat,#3d6be5) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.skm-cat-chip-count{flex:none;min-width:16px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--dsw-alias-bg-module-platform,rgba(0,0,0,.05));color:var(--dsw-alias-label-tertiary,#81858c);font-size:10.5px;line-height:16px;font-variant-numeric:tabular-nums;transition:background 160ms ease,color 160ms ease}
+.skm-cat-chip[data-active] .skm-cat-chip-count{background:color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent);color:var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5))}
+/* 包名旁标签：整颗可点（点在标题行里，由 JS 分流成筛选而非展开），带入场弹入。 */
+.skm-bundle-cats{flex:none;display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
+.skm-bundle-cat-tag{display:inline-flex;align-items:center;gap:4px;height:19px;box-sizing:border-box;padding:0 7px;border-radius:999px;font-size:11px;line-height:17px;white-space:nowrap;cursor:pointer;color:var(--skm-cat,#3d6be5);background:color-mix(in srgb,var(--skm-cat,#3d6be5) 11%,transparent);border:1px solid color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent);animation:skm-cat-tag-in 200ms cubic-bezier(.2,.9,.3,1.1) both;transition:background 150ms ease,border-color 150ms ease,transform 120ms ease,box-shadow 180ms ease}
+.skm-bundle-cat-tag:hover{background:color-mix(in srgb,var(--skm-cat,#3d6be5) 20%,transparent);border-color:color-mix(in srgb,var(--skm-cat,#3d6be5) 45%,transparent);transform:translateY(-1px);box-shadow:0 2px 7px color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent)}
+.skm-bundle-cat-tag[data-active]{background:var(--skm-cat,#3d6be5);border-color:transparent;color:#fff;box-shadow:0 2px 9px color-mix(in srgb,var(--skm-cat,#3d6be5) 40%,transparent)}
+@keyframes skm-cat-tag-in{from{opacity:0;transform:translateY(3px) scale(.94)}to{opacity:1;transform:none}}
+.skm-cat-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
+.skm-bundle-cat-tag[data-active] .skm-cat-dot{background:#fff}
+/* 分类编辑器 */
+.skm-cat-editor{display:flex;flex-direction:column;gap:8px;box-sizing:border-box;width:100%}
+.skm-cat-empty{margin:0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary,#81858c)}
+.skm-cat-selected{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:5px}
+.skm-cat-selected-tag{display:inline-flex;align-items:center;gap:5px;height:24px;box-sizing:border-box;padding:0 4px 0 9px;border-radius:999px;font-size:12px;line-height:20px;color:var(--skm-cat,#3d6be5);background:color-mix(in srgb,var(--skm-cat,#3d6be5) 12%,transparent);border:1px solid color-mix(in srgb,var(--skm-cat,#3d6be5) 26%,transparent);animation:skm-cat-tag-in 200ms cubic-bezier(.2,.9,.3,1.1) both}
+.skm-cat-selected-name{white-space:nowrap}
+.skm-cat-remove{flex:none;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;padding:0;border:none;border-radius:50%;background:transparent;color:inherit;cursor:pointer;opacity:.6;transition:opacity 140ms ease,background 140ms ease,transform 140ms ease}
+.skm-cat-remove:hover{opacity:1;background:color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent)}
+.skm-cat-remove:active{transform:scale(.9)}
+.skm-cat-suggest{display:flex;flex-wrap:wrap;gap:4px}
+.skm-cat-preset{display:inline-flex;align-items:center;gap:3px;height:23px;box-sizing:border-box;padding:0 8px;border:1px dashed var(--dsw-alias-border-l2,rgba(0,0,0,.16));border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary,#61666b);font-family:inherit;font-size:11.5px;line-height:19px;cursor:pointer;transition:color 140ms ease,border-color 140ms ease,background 140ms ease,transform 120ms ease}
+.skm-cat-preset:hover:not(:disabled){color:var(--skm-cat,#3d6be5);border-color:color-mix(in srgb,var(--skm-cat,#3d6be5) 55%,transparent);border-style:solid;background:color-mix(in srgb,var(--skm-cat,#3d6be5) 9%,transparent);transform:translateY(-1px)}
+.skm-cat-preset:active:not(:disabled){transform:translateY(0) scale(.96)}
+.skm-cat-preset:disabled{opacity:.4;cursor:default}
+.skm-cat-preset-plus{font-size:13px;line-height:16px;opacity:.7}
+.skm-cat-input{box-sizing:border-box;width:100%;height:32px;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.12));border-radius:9px;padding:0 10px;font-family:inherit;font-size:12.5px;line-height:20px;color:var(--dsw-alias-label-primary,#1f2430);background:var(--dsw-alias-bg-base,#fff);transition:border-color 150ms ease,box-shadow 150ms ease}
+.skm-cat-input:focus,.skm-cat-input:focus-visible{outline:none;border-color:var(--dsw-alias-state-business-primary,#3d6be5);box-shadow:0 0 0 3px rgba(61,107,229,.12)}
+.skm-cat-limit{margin:0;font-size:11.5px;line-height:17px;color:var(--dsw-alias-label-tertiary,#81858c)}
+
 .skm-chevron{flex:none;margin-left:auto;color:var(--dsw-alias-label-caption,#adb2b8);transition:transform 120ms}
 .skm-bundle-row-outer[data-open='true'] .skm-chevron{transform:rotate(180deg)}
 .skm-bundle-more{flex:none;display:flex;align-items:center}
@@ -2834,6 +2938,10 @@ body[data-ds-dark-theme] .skm-bundle-missing{color:#f0c48a}
   .skm-bundle-empty,.skm-bundle-missing{animation:none}
   .skm-bundle-empty-btn,.skm-bundle-missing-btn{transition:none}
   .skm-skill-card::before,.skm-skill-badge,.skm-skill-title,.skm-tag-status{transition:none}
+  .skm-cat-chip-row{animation:none}
+  .skm-cat-chip[data-active] .skm-cat-chip-dot{animation:none}
+  .skm-bundle-cat-tag,.skm-cat-selected-tag{animation:none}
+  .skm-cat-chip,.skm-bundle-cat-tag,.skm-cat-preset,.skm-cat-remove,.skm-cat-input,.skm-cat-chip-dot,.skm-cat-chip-count{transition:none}
 }
 `
 
@@ -3162,6 +3270,74 @@ function SkillWordmarkIcon(): JSX.Element {
  *   ────────────────────────────
  *   工具  [查看]  [查看文件按钮]   [归入/移出] [删除]
  */
+/**
+ * 分类编辑器：已选标签（可摘）+ 建议分类（点加）+ 自定义输入（回车加）。
+ * 「新建技能包」与「设置分类」两处共用，值由父级持有。
+ */
+function CategoryEditor({ value, onChange, label }: {
+  value: string[]
+  onChange: (next: string[]) => void
+  label: string
+}): JSX.Element {
+  const [draft, setDraft] = useState('')
+  const full = value.length >= MAX_BUNDLE_CATEGORIES
+  const add = (raw: string): void => {
+    const name = raw.trim().slice(0, 24)
+    setDraft('')
+    if (name === '' || value.includes(name) || full) return
+    onChange([...value, name])
+  }
+  return (
+    <div className={css.catEditor}>
+      {value.length === 0 ? (
+        <p className={css.catEmpty}>{skillT('bundleCatEmptyHint')}</p>
+      ) : (
+        <ul className={css.catSelected} aria-label={label}>
+          {value.map((name) => (
+            <li key={name} className={css.catSelectedTag} style={{ '--skm-cat': categoryColor(name) } as CSSProperties}>
+              <i className={css.catDot} aria-hidden="true" />
+              <span className={css.catSelectedName}>{name}</span>
+              <button
+                type="button"
+                className={css.catRemove}
+                aria-label={skillT('bundleCatRemove', { name })}
+                onClick={() => { onChange(value.filter((item) => item !== name)) }}
+              >
+                <IconCloseOutline16 size={11} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className={css.catSuggest} role="group" aria-label={skillT('bundleCatTitle')}>
+        {PRESET_BUNDLE_CATEGORIES.filter((preset) => !value.includes(preset)).map((preset) => (
+          <button
+            type="button"
+            key={preset}
+            className={css.catPreset}
+            disabled={full}
+            style={{ '--skm-cat': categoryColor(preset) } as CSSProperties}
+            title={skillT('bundleCatAddPreset', { name: preset })}
+            onClick={() => { add(preset) }}
+          >
+            <span className={css.catPresetPlus} aria-hidden="true">+</span>{preset}
+          </button>
+        ))}
+      </div>
+      <input
+        className={css.catInput}
+        value={draft}
+        placeholder={skillT('bundleCatPlaceholder')}
+        aria-label={skillT('bundleCatCustom')}
+        disabled={full}
+        onChange={(event) => { setDraft(event.currentTarget.value) }}
+        onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); add(draft) } }}
+      />
+      {full && <p className={css.catLimit}>{skillT('bundleCatLimit', { n: MAX_BUNDLE_CATEGORIES })}</p>}
+    </div>
+  )
+}
+
 function SkillCard({ skill, bundleId, bundleName, enabled, lockedReason, scopeLabel, index, onToggle, onView, onAssign, onRemove, onDelete }: {
   skill: SkillInfo
   bundleId: string | null
@@ -3348,6 +3524,8 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
   const [assignTarget, setAssignTarget] = useState<SkillInfo | null>(null)
   const [newBundleOpen, setNewBundleOpen] = useState(false)
   const [newBundleName, setNewBundleName] = useState('')
+  /** 新建技能包弹窗里同时挂的分类。 */
+  const [newBundleCats, setNewBundleCats] = useState<string[]>([])
   const [creatingBundle, setCreatingBundle] = useState(false)
   const [renameTarget, setRenameTarget] = useState<{ bundleId: string; name: string } | null>(null)
   const [renaming, setRenaming] = useState(false)
@@ -3413,6 +3591,12 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
   const [viewMode] = useState<'grid' | 'list'>('grid')
   /** 左栏分类 / 筛选：启用状态 + Agent 预设（分类切换由左栏「Agent 预设分类」驱动）。 */
   const [statusFilter, setStatusFilter] = useState<'all' | 'on' | 'off'>('all')
+  /** 技能包分类筛选：null = 不筛；分类名或 UNCATEGORIZED = 只看该类。 */
+  const [catFilter, setCatFilter] = useState<string | null>(null)
+  /** 「设置分类」弹窗的目标包（null = 关）；catDraft 是弹窗内的编辑副本。 */
+  const [catTarget, setCatTarget] = useState<{ bundleId: string; name: string } | null>(null)
+  const [catDraft, setCatDraft] = useState<string[]>([])
+  const [savingCats, setSavingCats] = useState(false)
   /** 自定义下拉/菜单：来源筛选 / Agent 预设 / 名称排序 / 快捷筛选 / 行内更多菜单（哪个开着，null = 都关）。 */
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   /** 同步状态：/api/skill-health 只读扫描结果（缺 SKILL.md 等）。 */
@@ -3865,8 +4049,9 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     setCreatingBundle(true)
     try {
       const created = newBundleName.trim()
-      await skillApi.createBundle(created)
+      await skillApi.createBundle(created, newBundleCats)
       setNewBundleName('')
+      setNewBundleCats([])
       setNewBundleOpen(false)
       pushToast('ok', skillT('bundleCreated', { name: created }))
       refresh()
@@ -3877,7 +4062,31 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
     }
   }
 
+  /** 打开「设置分类」弹窗：草稿从快照里的当前值起步。 */
+  const openCatEditor = (bundle: BundleInfo): void => {
+    setCatTarget({ bundleId: bundle.id, name: bundle.name })
+    setCatDraft([...(bundle.categories ?? [])])
+  }
+
+  /** 保存分类：PATCH 只带 categories；顺手把筛选跟到新值，避免改完包「消失」。 */
+  const submitCategories = async (): Promise<void> => {
+    if (catTarget === null || savingCats) return
+    setSavingCats(true)
+    try {
+      await skillApi.setBundleCategories(catTarget.bundleId, catDraft)
+      if (activeCat !== null && !catDraft.includes(activeCat) && activeCat !== UNCATEGORIZED) setCatFilter(null)
+      pushToast('ok', skillT('bundleCatSaved', { name: catTarget.name }))
+      setCatTarget(null)
+      refresh()
+    } catch (error) {
+      failToast('设置分类', error)
+    } finally {
+      setSavingCats(false)
+    }
+  }
+
   const submitRename = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+
     event.preventDefault()
     if (renaming || renameTarget === null || renameTarget.name.trim() === '') return
     setRenaming(true)
@@ -3992,10 +4201,37 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
    * 也点不到，没法再往里归技能。只有真正带筛选条件时才按命中情况隐藏。
    */
   const filtering = q !== '' || statusFilter !== 'all'
+  /**
+   * 分类索引：分类名 → 挂了它的技能包数；没挂任何分类的包归到 UNCATEGORIZED 桶。
+   * 顶栏胶囊与包名旁的标签都从这里取数，所以两边口径天然一致。
+   */
+  const categoryCounts = (() => {
+    const counts = new Map<string, number>()
+    for (const bundle of bundles) {
+      const cats = bundle.categories ?? []
+      if (cats.length === 0) {
+        counts.set(UNCATEGORIZED, (counts.get(UNCATEGORIZED) ?? 0) + 1)
+        continue
+      }
+      for (const cat of cats) counts.set(cat, (counts.get(cat) ?? 0) + 1)
+    }
+    return counts
+  })()
+  const categoryList = sortCategories(categoryCounts)
+  /** 至少要有一个真分类（未分类桶不算）才值得占一行顶栏空间。 */
+  const hasCategories = categoryList.some((cat) => cat !== UNCATEGORIZED)
+  /** 选中的分类被最后一个包摘掉时自动回落「全部」，不留一个筛不出东西的死状态。 */
+  const activeCat = catFilter !== null && categoryCounts.has(catFilter) ? catFilter : null
+  const catMatch = (bundle: BundleInfo): boolean => {
+    if (activeCat === null) return true
+    const cats = bundle.categories ?? []
+    return activeCat === UNCATEGORIZED ? cats.length === 0 : cats.includes(activeCat)
+  }
   const visibleBundleAll = (sourceFilter === 'loose' ? [] : bundles)
+    .filter((bundle) => catMatch(bundle))
     .map((bundle) => ({ ...bundle, skills: filteredSkills(bundle.skills) }))
     .filter((bundle) => bundle.skills.length > 0 || (bundle.skillCount === 0 && !filtering))
-  const visibleLooseAll = sourceFilter === 'bundles' ? [] : filteredSkills(loose)
+  const visibleLooseAll = sourceFilter === 'bundles' || activeCat !== null ? [] : filteredSkills(loose)
   const totalSkills = bundles.reduce((n, bundle) => n + bundle.skillCount, 0) + loose.length
   const bundleCount = bundles.length
   /** 同步状态卡展示模型：ok=绿点全健康；issue=橙点带数量；unavailable=灰点待检测（旧 host 未加载新路由）；loading=检测中。 */
@@ -4033,7 +4269,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
       onClose={() => {
         // 安装/确认进行中禁止关闭；二级弹窗（新建/添加/确认/查看器/归组）打开时 Esc 归二级弹窗。
         if (installing || confirming) return
-        if (newBundleOpen || addOpen || confirm !== null || viewer !== null || assignTarget !== null) return
+        if (newBundleOpen || addOpen || confirm !== null || viewer !== null || assignTarget !== null || catTarget !== null) return
         onClose()
       }}
       anchor={anchor}
@@ -4113,7 +4349,45 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
             })}
           </div>
 
+          {/* 技能包分类：胶囊即筛选（再点一次取消）。没有一个真分类时不占这一行。 */}
+          {hasCategories && (
+            <div className={css.catChipRow} role="group" aria-label={t('bundleCatFilterAria')}>
+              <span className={css.catChipLabel}>{t('bundleCatTitle')}</span>
+              <button
+                type="button"
+                className={css.catChip}
+                data-neutral
+                data-active={activeCat === null || undefined}
+                aria-pressed={activeCat === null}
+                onClick={() => { setCatFilter(null) }}
+              >
+                {t('bundleCatAll')}
+                <span className={css.catChipCount}>{bundleCount}</span>
+              </button>
+              {categoryList.map((cat) => {
+                const none = cat === UNCATEGORIZED
+                const active = activeCat === cat
+                return (
+                  <button
+                    type="button"
+                    key={cat}
+                    className={css.catChip}
+                    data-active={active || undefined}
+                    aria-pressed={active}
+                    style={none ? undefined : ({ '--skm-cat': categoryColor(cat) } as CSSProperties)}
+                    onClick={() => { setCatFilter(active ? null : cat) }}
+                  >
+                    <i className={css.catChipDot} aria-hidden="true" />
+                    {none ? t('bundleCatNone') : cat}
+                    <span className={css.catChipCount}>{categoryCounts.get(cat) ?? 0}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           {/* 启用状态：三档分段 */}
+
           <div className={css.statusSeg} role="group" aria-label={t('statusAll')}>
             {([['all', t('statusAll')], ['on', t('statusOn')], ['off', t('statusOff')]] as const).map(([value, label]) => (
               <button
@@ -4339,6 +4613,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                     const bundleToggling = toggling.has(`bundle:${bundle.id}`)
                     const gridClass = viewMode === 'list' ? `${css.skillGrid} ${css.skillGridList}` : css.skillGrid
                     const missing = bundle.missingSkills ?? []
+                    const bundleCats = bundle.categories ?? []
                     const emptyBundle = bundle.skillCount === 0
                     // 空包默认展开显示引导：折叠着只剩一行标题，用户会以为包丢了。
                     const openView = open2 || emptyBundle
@@ -4352,11 +4627,38 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                             type="button"
                             className={css.bundleRow}
                             aria-expanded={openView}
-                            onClick={() => { toggleExpanded(bundle.id) }}
+                            onClick={(event) => {
+                              // 标题行里嵌着分类标签：点到标签就是筛选，不该顺手把包展开/收起。
+                              // 标签本身是 span（按钮里不能再套按钮），键盘路径走顶栏分类胶囊。
+                              const hit = (event.target as HTMLElement).closest('[data-skm-cat]') as HTMLElement | null
+                              if (hit !== null) {
+                                const cat = hit.dataset.skmCat ?? ''
+                                setCatFilter(activeCat === cat ? null : cat)
+                                return
+                              }
+                              toggleExpanded(bundle.id)
+                            }}
                           >
                             <span className={css.bundleIcon} aria-hidden="true"><FolderBlueIcon size={17} /></span>
                             <span className={css.bundleName} title={bundle.name}>{bundle.name}</span>
                             <span className={css.bundleCount}>{t('skillsCount', { n: bundle.skillCount })}</span>
+                            {bundleCats.length > 0 && (
+                              <span className={css.bundleCats}>
+                                {bundleCats.map((cat) => (
+                                  <span
+                                    key={cat}
+                                    className={css.bundleCatTag}
+                                    data-skm-cat={cat}
+                                    data-active={activeCat === cat || undefined}
+                                    title={t('bundleCatTip', { name: cat })}
+                                    style={{ '--skm-cat': categoryColor(cat) } as CSSProperties}
+                                  >
+                                    <i className={css.catDot} aria-hidden="true" />
+                                    {cat}
+                                  </span>
+                                ))}
+                              </span>
+                            )}
                             <IconChevronDownOutline14 className={css.chevron} size={13} aria-hidden="true" />
                           </button>
                           {/* 技能包一键开关：整包启用/禁用 */}
@@ -4386,6 +4688,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                                 if (id === 'enable') toggleBundle(bundle, true)
                                 else if (id === 'disable') toggleBundle(bundle, false)
                                 else if (id === 'rename') setRenameTarget({ bundleId: bundle.id, name: bundle.name })
+                                else if (id === 'cat') openCatEditor(bundle)
                                 else if (id === 'delete') setConfirm({ kind: 'bundle', bundle })
                               }}
                               portal
@@ -4394,6 +4697,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                                 { id: 'disable', label: t('disableBundle'), icon: <IconCloseOutline16 size={14} /> },
                                 { type: 'separator', id: 'gap' },
                                 { id: 'rename', label: t('rename'), icon: <IconEditOutline16 size={14} /> },
+                                { id: 'cat', label: t('bundleCatEdit'), icon: <TagIcon /> },
                                 { id: 'delete', label: t('delete'), icon: <IconTrashOutline16 size={14} />, danger: true },
                               ]}
                               anchor={(
@@ -4538,20 +4842,39 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
         onClose={() => { setMcpAddOpen(false) }}
       />
 
-      {/* 新建技能包弹窗 */}
+      {/* 新建技能包弹窗：名字与分类一起给，省得建完再进去设置一次。 */}
       <Modal
         open={newBundleOpen}
-        onClose={() => { if (!creatingBundle) setNewBundleOpen(false) }}
+        onClose={() => { if (!creatingBundle) { setNewBundleOpen(false); setNewBundleCats([]) } }}
         closeLabel={t('close')}
         title={t('newBundle')}
       >
-        <form className={css.inlineForm} onSubmit={(event) => { void submitNewBundle(event) }}>
+        <form className={css.stackForm} onSubmit={(event) => { void submitNewBundle(event) }}>
           <input className={css.inlineInput} value={newBundleName} placeholder={t('newBundlePlaceholder')}
             aria-label={t('newBundlePlaceholder')} autoFocus disabled={creatingBundle}
             onChange={(event) => { setNewBundleName(event.currentTarget.value) }} />
-          <Button variant="primary" type="submit" disabled={creatingBundle || newBundleName.trim() === ''}>{t('create')}</Button>
-          <Button variant="outline" type="button" disabled={creatingBundle} onClick={() => { setNewBundleOpen(false) }}>{t('cancel')}</Button>
+          <CategoryEditor value={newBundleCats} onChange={setNewBundleCats} label={t('newBundle')} />
+          <div className={css.inlineForm}>
+            <Button variant="primary" type="submit" disabled={creatingBundle || newBundleName.trim() === ''}>{t('create')}</Button>
+            <Button variant="outline" type="button" disabled={creatingBundle} onClick={() => { setNewBundleOpen(false); setNewBundleCats([]) }}>{t('cancel')}</Button>
+          </div>
         </form>
+      </Modal>
+
+      {/* 设置分类弹窗：与新建包共用同一个 CategoryEditor，值走草稿态，保存才落盘。 */}
+      <Modal
+        open={catTarget !== null}
+        onClose={() => { if (!savingCats) setCatTarget(null) }}
+        closeLabel={t('close')}
+        title={t('bundleCatEditTitle', { name: catTarget?.name ?? '' })}
+      >
+        <div className={css.stackForm}>
+          <CategoryEditor value={catDraft} onChange={setCatDraft} label={t('bundleCatEdit')} />
+          <div className={css.inlineForm}>
+            <Button variant="primary" type="button" disabled={savingCats} onClick={() => { void submitCategories() }}>{t('bundleCatDone')}</Button>
+            <Button variant="outline" type="button" disabled={savingCats} onClick={() => { setCatTarget(null) }}>{t('cancel')}</Button>
+          </div>
+        </div>
       </Modal>
 
       {/* 添加技能弹窗：先拖放/浏览选文件，再填表单安装 */}

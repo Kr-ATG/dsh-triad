@@ -157,6 +157,28 @@ async function writeBundles(root, file) {
 `, "utf8");
   await rename(temp, target);
 }
+/**
+ * 技能包分类（dsh-triad patch）：账本里每条 bundle 多一个可选的 categories 字符串数组。
+ * 老账本没有这个字段 —— 读到时一律归一成空数组（未分类），写入时只保留去空白、去重、
+ * 限长限量的条目；脏字段直接丢弃而不是报错，面板不该因为一个坏分类整页打不开。
+ */
+var CATEGORY_MAX_LEN = 24;
+var CATEGORY_MAX_PER_BUNDLE = 8;
+function normalizeCategories(input) {
+  if (!Array.isArray(input)) return [];
+  const out = [];
+  for (const raw of input) {
+    if (typeof raw !== "string") continue;
+    const trimmed = raw.trim().slice(0, CATEGORY_MAX_LEN);
+    if (trimmed === "" || out.includes(trimmed)) continue;
+    if (out.length >= CATEGORY_MAX_PER_BUNDLE) break;
+    out.push(trimmed);
+  }
+  return out;
+}
+function categoriesOf(record) {
+  return normalizeCategories(record.categories);
+}
 function checkedName(name2) {
   const trimmed = name2.trim();
   if (trimmed === "" || trimmed.length > NAME_MAX) {
@@ -290,7 +312,7 @@ async function snapshot() {
       if (skill !== void 0) skills.push(skill);
       assigned.add(name2);
     }
-    bundles.push({ id: record.id, name: record.name, skillCount: skills.length, skills, missingSkills: missing });
+    bundles.push({ id: record.id, name: record.name, skillCount: skills.length, skills, missingSkills: missing, categories: categoriesOf(record) });
     if (changed) {
       Object.assign(record, { skills: canonical });
       healed.push(record.id);
@@ -308,6 +330,7 @@ async function snapshot() {
 }
 async function createBundle(body) {
   const name2 = checkedName(typeof body.name === "string" ? body.name : "");
+  const categories = normalizeCategories(body.categories);
   const root = managedRoot();
   const ledger = await readBundles(root);
   if (ledger.bundles.some((bundle) => bundle.name === name2)) {
@@ -320,26 +343,30 @@ async function createBundle(body) {
     id = `${base}-${String(suffix)}`;
     suffix += 1;
   }
-  const record = { id, name: name2, skills: [] };
+  const record = { id, name: name2, skills: [], categories };
   await writeBundles(root, { version: 1, bundles: [...ledger.bundles, record] });
-  return { id, name: name2, skillCount: 0, skills: [], missingSkills: [] };
+  return { id, name: name2, skillCount: 0, skills: [], missingSkills: [], categories };
 }
 async function renameBundle(id, body) {
-  const name2 = checkedName(typeof body.name === "string" ? body.name : "");
   const root = managedRoot();
   const ledger = await readBundles(root);
   const index = ledger.bundles.findIndex((bundle) => bundle.id === id);
   const existing = index === -1 ? void 0 : ledger.bundles[index];
   if (existing === void 0) throw new Error(`bundle ${JSON.stringify(id)} not found`);
-  if (ledger.bundles.some((bundle, i) => i !== index && bundle.name === name2)) {
-    throw new Error(`bundle "${name2}" already exists`);
+  // PATCH 语义：name 与 categories 各自可选，只改真正传进来的那一项 ——
+  // 「设置分类」不该被迫回传一个名字。
+  const nextName = typeof body.name === "string" && body.name.trim() !== ""
+    ? checkedName(body.name) : existing.name;
+  if (nextName !== existing.name && ledger.bundles.some((bundle, i) => i !== index && bundle.name === nextName)) {
+    throw new Error(`bundle "${nextName}" already exists`);
   }
-  const record = { ...existing, name: name2 };
+  const record = { ...existing, name: nextName };
+  if (Array.isArray(body.categories)) record.categories = normalizeCategories(body.categories);
   const bundles = [...ledger.bundles];
   bundles[index] = record;
   await writeBundles(root, { version: 1, bundles });
   const skills = await viewsOf(record.skills);
-  return { id: record.id, name: name2, skillCount: skills.length, skills, missingSkills: [] };
+  return { id: record.id, name: nextName, skillCount: skills.length, skills, missingSkills: [], categories: categoriesOf(record) };
 }
 async function deleteBundle(id) {
   const root = managedRoot();
@@ -380,7 +407,7 @@ async function setBundleSkills(id, body) {
   const bundles = ledger.bundles.map((candidate) => candidate.id === id ? record : { ...candidate, skills: candidate.skills.filter((name2) => !aliases.has(name2)) });
   await writeBundles(root, { version: 1, bundles });
   const views = skills.map((name2) => skillIndex.byName.get(name2)).filter((skill) => skill !== void 0);
-  return { id: record.id, name: record.name, skillCount: views.length, skills: views, missingSkills: [] };
+  return { id: record.id, name: record.name, skillCount: views.length, skills: views, missingSkills: [], categories: categoriesOf(record) };
 }
 async function assignBundle(root, skillName, bundleId) {
   if (typeof bundleId !== "string" || bundleId === "") return;

@@ -101,6 +101,8 @@ interface BundleRecord {
   id: string
   name: string
   skills: string[]
+  /** 技能包分类（skill-manager 写）；本模块只透传，不读它。 */
+  categories?: string[]
 }
 
 /** Read the bundle ledger; missing/corrupt files start empty. */

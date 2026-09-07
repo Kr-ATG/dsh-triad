@@ -134,9 +134,36 @@ check(existsSync(join(agentsSkills, "fallback-name", "SKILL.md")), "回落名建
 
 // ── 7. 构建产物里确实带上了这套修复（防止「源码改了没重新构建」）
 const built = readFileSync(join(process.cwd(), "lib/index.js"), "utf8")
-for (const marker of ["resolveSkillEntry", "normalizeUploadFiles", "setFrontmatterName", "missingSkills"]) {
+for (const marker of ["resolveSkillEntry", "normalizeUploadFiles", "setFrontmatterName", "missingSkills", "normalizeCategories"]) {
   check(built.includes(marker), `lib/index.js 含 ${marker}（构建产物已更新）`)
 }
+
+// ── 8. 技能包分类：老账本读成空数组，写入归一，PATCH 只改传进来的字段
+const legacy = (await call("GET", "/api/skill-manager/list")).body
+check(Array.isArray(legacy.bundles.find((b) => b.id === "kr")?.categories)
+  && legacy.bundles.find((b) => b.id === "kr").categories.length === 0, "老账本（无 categories 字段）读成未分类，不报错")
+const madeBundle = await call("POST", "/api/skill-manager/bundles", { name: "分类包", categories: ["开发", " 开发 ", "", 1, "设计"] })
+check(madeBundle.status === 200 && JSON.stringify(madeBundle.body.categories) === JSON.stringify(["开发", "设计"]),
+  "新建时分类去重去空白、非字符串丢弃")
+const madeId = madeBundle.body.id
+const dirty = await call("PATCH", "/api/skill-manager/bundles/" + madeId, {
+  categories: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "  " + "x".repeat(40)],
+})
+check(dirty.status === 200 && dirty.body.categories.length === 8, "分类数量封顶 8 个")
+check(dirty.body.categories[7].length <= 24, "单个分类长度封顶 24 字符")
+check(dirty.body.name === "分类包", "PATCH 不带 name 时包名保持不变")
+const renamed = await call("PATCH", "/api/skill-manager/bundles/" + madeId, { name: "改名包", categories: ["办公协同"] })
+check(renamed.status === 200 && renamed.body.name === "改名包" && renamed.body.categories[0] === "办公协同",
+  "PATCH 同时改名与改分类")
+const ledgerCats = JSON.parse(readFileSync(join(agentsSkills, ".bundles.json"), "utf8")).bundles.find((b) => b.id === madeId)
+check(JSON.stringify(ledgerCats.categories) === JSON.stringify(["办公协同"]), "分类落盘进 .bundles.json")
+const putSkills = await call("PUT", "/api/skill-manager/bundles/" + madeId + "/skills", { skillNames: ["my-tool"] })
+check(putSkills.status === 200 && JSON.stringify(putSkills.body.categories) === JSON.stringify(["办公协同"]),
+  "改成员不丢分类（整条记录是展开写的，不是重建）")
+const listed = (await call("GET", "/api/skill-manager/list")).body
+check(listed.bundles.find((b) => b.id === madeId)?.categories?.[0] === "办公协同", "list 快照带出分类")
+const badCatType = await call("PATCH", "/api/skill-manager/bundles/" + madeId, { categories: "开发" })
+check(badCatType.status === 200 && Array.isArray(badCatType.body.categories), "categories 传非数组时按未处理忽略（不炸面板）")
 
 rmSync(sandbox, { recursive: true, force: true })
 console.log(failed === 0 ? "\nSKILL-MANAGER TEST PASSED" : `\nSKILL-MANAGER TEST FAILED (${String(failed)})`)
