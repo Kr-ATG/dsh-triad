@@ -227,6 +227,11 @@ export const zh = {
   scopeBadgeTitle: '归属',
   tagCountSuffix: '该标签 {n} 条',
   selectHint: '点击条目查看详情',
+  // ── 一键删除今日记忆 ──
+  deleteToday: '删今日',
+  deleteTodayHint: '一键删除今天创建/更新的记忆（置顶与已废弃保留）',
+  deleteTodayConfirm: '确定删除今天的 {n} 条记忆？此操作不可恢复。置顶记忆会保留，不会被删除。',
+  deleteTodayDone: '已删除 {n} 条今日记忆',
 } satisfies Record<string, string>
 
 /** dsh-memory locale key union. */
@@ -459,6 +464,10 @@ export const en = {
   scopeBadgeTitle: 'Scope',
   tagCountSuffix: '{n} with this tag',
   selectHint: 'Select an entry to see details',
+  deleteToday: 'Today',
+  deleteTodayHint: 'Delete memories created or updated today in one click (pinned and retired are kept)',
+  deleteTodayConfirm: 'Delete {n} memories from today? This cannot be undone. Pinned memories are kept.',
+  deleteTodayDone: 'Deleted {n} memories from today',
 } satisfies Record<MemoryLocaleKey, string>
 
 /** 轻量翻译函数类型（面板/入口组件共用）。 */

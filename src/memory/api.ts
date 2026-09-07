@@ -439,6 +439,44 @@ async function handle(
       json(res, 200, { ok: true, deleted: removed.length, missing: ids.length - removed.length })
       return
     }
+    if (method === 'POST' && rest === '/delete-today') {
+      // 一键删除「今日记忆」：更新时间（缺省按创建时间）落在本地今天、未置顶
+      // 且未废弃的条目（口径与面板「今天」分组一致）。可选 scope/projectHash
+      // 收窄范围（缺省=全局+全部项目）。置顶是用户显式标记的重要条目，批量
+      // 删除时跳过（与 /delete-project 同款豁免）。
+      const body = await readBody(req) as Record<string, unknown>
+      const scope = body.scope === 'global' || body.scope === 'project' ? body.scope : undefined
+      const projectHash = typeof body.projectHash === 'string' && body.projectHash.trim() !== ''
+        ? body.projectHash.trim()
+        : undefined
+      const today = localDate()
+      const removed = await store.mutateEntries(entries => {
+        const targets = entries.filter(entry => {
+          if (entry.pinned || entry.deprecated === true) return false
+          if (scope !== undefined && entry.scope !== scope) return false
+          if (scope === 'project' && projectHash !== undefined && entry.projectHash !== projectHash) return false
+          const stamp = entry.updatedAt ?? entry.createdAt
+          const time = Date.parse(stamp)
+          // updatedAt/createdAt 是 UTC ISO，用 localDate 换算成本地日期再比对。
+          return !Number.isNaN(time) && localDate(new Date(time)) === today
+        })
+        for (const target of targets) entries.splice(entries.indexOf(target), 1)
+        return targets
+      })
+      for (const entry of removed) {
+        await store.appendChange({
+          action: 'delete',
+          entryId: entry.id,
+          scope: entry.scope,
+          projectHash: entry.projectHash,
+          summary: `删除今日：${summarize(entry.content)}`,
+          before: entry.content,
+        })
+      }
+      await compileAll(store, config)
+      json(res, 200, { ok: true, deleted: removed.length })
+      return
+    }
     if (method === 'POST' && rest === '/revise') {
       // 修订：软废弃旧条目 + 写入后继条目（opencontext oc_memory_revise 语义）。
       const body = await readBody(req) as Record<string, unknown>

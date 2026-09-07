@@ -52,7 +52,7 @@ export function MemoryNavApp(): JSX.Element | null {
         onClick={e => {
           e.stopPropagation()
           setAnchor(navAnchorFrom(e.currentTarget))
-          openPanel(unread.count > 0 ? 'changes' : 'all')
+          openPanel(unread.count > 0 ? 'changes' : 'home')
         }}
       />
       {/* api 整体展开：面板 props 是 MemoryApi 的超集，逐字段列举会在

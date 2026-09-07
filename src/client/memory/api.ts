@@ -272,6 +272,8 @@ export interface MemoryApi {
   /** 批量删除（一次事务 + 一次编译，替代 N 次 deleteEntry）。 */
   deleteBatch: (entryIds: string[]) => Promise<{ ok: boolean; deleted: number; missing: number }>
   deleteProject: (projectHash: string) => Promise<{ ok: boolean; deleted: number }>
+  /** 一键删除今日记忆（更新/创建于本地今天；置顶与已废弃跳过）。 */
+  deleteToday: (target?: { scope?: 'global' | 'project'; projectHash?: string }) => Promise<{ ok: boolean; deleted: number }>
   meta: (projectHash: string, patch: { alias?: string; locked?: boolean; path?: string; autoMemory?: boolean }) => Promise<{ ok: boolean; meta: ProjectView }>
   remember: (input: {
     content: string
@@ -333,6 +335,7 @@ export function createMemoryApi(): MemoryApi {
     deleteEntry: (entryId) => sendJson<{ ok: boolean }>('/delete', { entryId }),
     deleteBatch: (entryIds) => sendJson<{ ok: boolean; deleted: number; missing: number }>('/delete-batch', { entryIds }),
     deleteProject: (projectHash) => sendJson<{ ok: boolean; deleted: number }>('/delete-project', { projectHash }),
+    deleteToday: (target = {}) => sendJson<{ ok: boolean; deleted: number }>('/delete-today', target),
     meta: (projectHash, patch) => sendJson<{ ok: boolean; meta: ProjectView }>('/meta', { projectHash, ...patch }),
     remember: (input) => sendJson<{ ok: boolean; created: boolean; entry: MemoryEntryView }>('/remember', input).then(withEntry),
     getInjectState: (sessionId) => getJson<InjectStateView>(`/inject-state?sessionId=${encodeURIComponent(sessionId)}`),

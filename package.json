@@ -1,6 +1,6 @@
 {
   "name": "dsh-triad",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "用量趋势 · 技能与 MCP Server 管理 · 自动沉淀的长期记忆——一套插件装齐 DSH 三个工作台。纯插件注入，不动官方源码，一句话安装。",
   "keywords": [
     "dsh",

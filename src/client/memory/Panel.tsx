@@ -48,13 +48,14 @@ import type {
 } from './api.js'
 import { css, ensureStyles } from './styles.js'
 import { SettingsTab } from './SettingsTab.js'
+import { MemoryHome } from './Home.js'
 import { makeT, type MemoryLocaleKey, type MemoryT } from './locales.js'
 import { modalStaggerClass } from '../modal-animation.js'
 import { ConfirmDialog } from './ConfirmDialog.js'
 import { PshBody, PopoverShell, type PopoverAnchor } from '../popover-shell.js'
 
 /** 面板视图（左栏导航决定）。 */
-export type MemoryTab = 'all' | 'changes' | 'revisions' | 'trash' | 'settings'
+export type MemoryTab = 'home' | 'all' | 'changes' | 'revisions' | 'trash' | 'settings'
 
 /** 时间分组。 */
 type GroupKey = 'today' | 'week' | 'earlier' | 'longterm'
@@ -268,6 +269,11 @@ function absoluteTime(iso: string | null): string {
   return `${date.toLocaleDateString()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
+/** 本地日期 YYYY-MM-DD（「今日记忆」筛选/删除口径，与 host localDate 一致）。 */
+function localDay(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
 /** 按 updatedAt 分组（与 host groupEntries 一致）。 */
 function groupEntries(entries: MemoryEntryView[]): Record<GroupKey, MemoryEntryView[]> {
   const groups: Record<GroupKey, MemoryEntryView[]> = { today: [], week: [], earlier: [], longterm: [] }
@@ -352,6 +358,16 @@ function BoxIcon({ size = 15 }: { size?: number }): JSX.Element {
   )
 }
 
+/** 首页（房子）。 */
+function HomeIcon({ size = 15 }: { size?: number }): JSX.Element {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2.5 7 8 2.5 13.5 7" />
+      <path d="M4 6.5V13.5h8V6.5" />
+    </svg>
+  )
+}
+
 /** 变更（时钟）。 */
 function ClockIcon({ size = 15 }: { size?: number }): JSX.Element {
   return (
@@ -381,6 +397,17 @@ function TrashIcon({ size = 15 }: { size?: number }): JSX.Element {
       <path d="M5.6 4.4V3a1 1 0 0 1 1-1h2.8a1 1 0 0 1 1 1v1.4" />
       <path d="M4.2 4.4l.6 8.2a1 1 0 0 0 1 .9h4.4a1 1 0 0 0 1-.9l.6-8.2" />
       <path d="M6.6 7.2v3.6M9.4 7.2v3.6" />
+    </svg>
+  )
+}
+
+/** 板擦（lucide eraser 改 16 viewBox）——一键删今日记忆。 */
+function EraserIcon({ size = 13 }: { size?: number }): JSX.Element {
+  return (
+    <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 12.5h6" />
+      <path d="M9.8 2.6 13.4 6.2a1.4 1.4 0 0 1 0 2L9.2 12.4H6.4L2.9 8.9a1.4 1.4 0 0 1 0-2l4.9-4.3a1.4 1.4 0 0 1 2 0Z" />
+      <path d="M6.1 4.3 11.7 9.9" />
     </svg>
   )
 }
@@ -427,9 +454,9 @@ function LightbulbIcon({ size = 13 }: { size?: number }): JSX.Element {
 /** 设置（齿轮）。 */
 function GearIcon({ size = 15 }: { size?: number }): JSX.Element {
   return (
-    <svg viewBox="0 0 16 16" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="8" cy="8" r="2.1" />
-      <path d="M8 1.8v1.9M8 12.3v1.9M1.8 8h1.9M12.3 8h1.9M3.6 3.6l1.35 1.35M11.05 11.05l1.35 1.35M12.4 3.6l-1.35 1.35M4.95 11.05 3.6 12.4" />
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
     </svg>
   )
 }
@@ -535,7 +562,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
   // 否则 load 的 useCallback 依赖 api 每次变化 → useEffect 无限重触发请求风暴。
   const apiRef = useRef(api)
   apiRef.current = api
-  const [tab, setTab] = useState<MemoryTab>(initialTab ?? 'all')
+  const [tab, setTab] = useState<MemoryTab>(initialTab ?? 'home')
   const [scope, setScope] = useState<ScopeFilter>('all')
   const [q, setQ] = useState('')
   // 防抖后的搜索词：list 请求只跟这个走（边打字边请求会打爆 host）。
@@ -1093,6 +1120,42 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
   const closeForms = (): void => { setEditing(null); setMoving(null); setAdding(false) }
   const selectEntry = (entry: MemoryEntryView): void => { closeForms(); setSelectedId(entry.id) }
 
+  // ── 一键删除今日记忆 ──────────────────────────────────────────────────
+
+  /** 今日记忆数（当前范围、未置顶、未废弃；口径与 host /delete-today 一致）。 */
+  const todayCount = useMemo(() => {
+    const pool = activePool ?? (state.status === 'ready' ? state.snapshot.entries : [])
+    const today = localDay(new Date())
+    return pool.filter(entry => {
+      if (entry.pinned || entry.deprecated === true) return false
+      if (scope === 'global' && entry.scope !== 'global') return false
+      if (scope.startsWith('project:')
+        && !(entry.scope === 'project' && entry.projectHash === scope.slice('project:'.length))) return false
+      const time = Date.parse(entry.updatedAt || entry.createdAt)
+      return !Number.isNaN(time) && localDay(new Date(time)) === today
+    }).length
+  }, [activePool, state, scope])
+
+  /** 一键删除今日记忆（跟随当前范围筛选；置顶与已废弃条目保留）。 */
+  const handleDeleteToday = (): void => {
+    if (todayCount === 0) return
+    const target: { scope?: 'global' | 'project'; projectHash?: string } = scope === 'global'
+      ? { scope: 'global' }
+      : scope.startsWith('project:')
+        ? { scope: 'project', projectHash: scope.slice('project:'.length) }
+        : {}
+    askConfirm(
+      t('deleteTodayConfirm', { n: todayCount }),
+      () => {
+        void run(async () => {
+          const response = await apiRef.current.deleteToday(target)
+          setNotice(t('deleteTodayDone', { n: response.deleted }))
+        })
+      },
+      true,
+    )
+  }
+
   // 多选派生与批量删除（依赖 filtered，须在其后定义）。
   const allChecked = filtered.length > 0 && filtered.every(entry => checkedIds.has(entry.id))
   const toggleAllChecked = (): void => {
@@ -1143,6 +1206,25 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
     [allTags, catExpanded],
   )
 
+  /** 首页仪表盘条目集：活跃池优先（与分类计数同口径），未就绪时回落快照。 */
+  const homeEntries = (activePool ?? snapshot?.entries ?? []).filter(entry => entry.deprecated !== true)
+  /** 首页导航回调：复用既有 tab/筛选/选中态，不新增数据链路。 */
+  const homeNav = {
+    goAll: (opts?: { tag?: string; scope?: string; q?: string }): void => {
+      if (opts?.tag !== undefined) setTag(opts.tag)
+      if (opts?.scope !== undefined) setScope(opts.scope as ScopeFilter)
+      if (opts?.q !== undefined) setQ(opts.q)
+      setTab('all'); closeForms(); exitSelecting()
+    },
+    goChanges: (): void => { setTab('changes'); closeForms(); exitSelecting() },
+    goSettings: (): void => { setTab('settings'); closeForms(); exitSelecting() },
+    goAdd: (prefill?: { content?: string; tags?: string }): void => {
+      if (prefill?.content !== undefined) setAddContent(prefill.content)
+      if (prefill?.tags !== undefined) setAddTags(prefill.tags)
+      setAdding(true); setEditing(null); setMoving(null); setTab('all'); exitSelecting()
+    },
+    pickEntry: (id: string): void => { setSelectedId(id); setTab('all'); closeForms(); exitSelecting() },
+  }
   /** 变更导航计数：优先全量 changeCount，旧 host 无该字段时回落 todayChanges。 */
   const changeCount = summary?.changeCount ?? summary?.todayChanges ?? 0
   /** 项目总数：与下面列出的项目行同源（含零记忆的 DSH 工作区）。 */
@@ -1676,10 +1758,11 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
   if (!open) return null
 
   /* 左侧导航项。 */
-  const navItem = (key: MemoryTab, icon: JSX.Element, label: string, count: number, hint?: string): JSX.Element => (
+  const navItem = (key: MemoryTab, icon: JSX.Element, label: string, count: number, hint?: string, badge = true): JSX.Element => (
     <button
       key={key}
       type="button"
+      title={label + (count > 0 ? ' · ' + count.toLocaleString() : '')}
       className={tab === key ? `${css.navItem} ${css.navItemActive}` : css.navItem}
       aria-current={tab === key ? 'page' : undefined}
       onClick={() => {
@@ -1691,7 +1774,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
     >
       <span className={css.navIcon}>{icon}</span>
       {label}
-      <CountBadge key={count} value={count} hint={hint} />
+      {badge && (<CountBadge key={count} value={count} hint={hint} />)}
     </button>
   )
 
@@ -1712,7 +1795,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
         <span className="psh-title">{t('panelTitle')}</span>
       </div>
       <div className={`${css.panel} ${modalStaggerClass}`} aria-busy={state.status === 'loading'}>
-        {/* ── 顶栏：导航 / 项目 / 分类 / 设置横排 ── */}
+        {/* ── 底部 dock：图标坞（文字进 tooltip） ── */}
         <aside className={css.sidebar}>
           <div className={css.sidebarBrand}>
             <span className={css.sidebarLogo}><BoxIcon size={14} /></span>
@@ -1721,6 +1804,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
           <button
             type="button"
             className={css.sidebarAdd}
+            title={t('add')}
             aria-expanded={adding}
             onClick={() => {
               setAdding(value => !value)
@@ -1738,11 +1822,13 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
             {t('add')}
           </button>
           <nav className={css.navList}>
+            {navItem('home', <HomeIcon size={15} />, '首页', 0, undefined, false)}
             {navItem('all', <BoxIcon size={15} />, t('navAll'), summary?.entryCount ?? 0, t('hintActive'))}
             {/* 全局层入口：只看 global 层记忆（跨项目通用），与项目区筛选同源（scope=global）。 */}
             <button
               type="button"
               className={tab === 'all' && scope === 'global' ? `${css.navItem} ${css.navItemActive}` : css.navItem}
+              title={`${t('navGlobal')} · ${summary?.globalCount ?? 0}`}
               aria-current={tab === 'all' && scope === 'global' ? 'page' : undefined}
               onClick={() => {
                 setTab('all')
@@ -1781,6 +1867,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
           <div className={css.projList}>
             <button
               type="button"
+              title={`${t('navAllProjects')} · ${projectTotal}`}
               className={scope === 'all' ? `${css.projRow} ${css.projRowActive}` : css.projRow}
               onClick={() => { setScope('all'); setTab('all'); closeForms(); exitSelecting() }}
             >
@@ -1795,6 +1882,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                 <button
                   key={project.hash}
                   type="button"
+                  title={`${name} · ${project.entryCount}`}
                   className={active ? `${css.projRow} ${css.projRowActive}` : css.projRow}
                   onClick={() => {
                     setScope(`project:${project.hash}`)
@@ -1835,6 +1923,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                 <button
                   key={cat.tag}
                   type="button"
+                  title={`${cat.tag} · ${cat.count}`}
                   className={active ? `${css.catRow} ${css.catRowActive}` : css.catRow}
                   onClick={() => { setTag(active ? '' : cat.tag); setTab('all') }}
                 >
@@ -1845,7 +1934,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
               )
             })}
             {allTags.length > 5 && !catExpanded && (
-              <button type="button" className={`${css.catRow} ${css.catMore}`} onClick={() => { setCatExpanded(true) }}>
+              <button type="button" title={t('navMoreCategories')} className={`${css.catRow} ${css.catMore}`} onClick={() => { setCatExpanded(true) }}>
                 <span className={css.catDot} style={{ ['--dot' as string]: '#CED2DA' }} />
                 {t('navMoreCategories')}
                 <span className={css.navChevron}>▾</span>
@@ -1855,6 +1944,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
           <div className={css.sidebarFoot}>
             <button
               type="button"
+              title={t('tabSettings')}
               className={tab === 'settings' ? `${css.settingsNav} ${css.settingsNavActive}` : css.settingsNav}
               onClick={() => { setTab('settings'); closeForms(); exitSelecting() }}
             >
@@ -1866,6 +1956,19 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
 
         {/* ── 右区：顶栏 / 筛选行 / 主区 ── */}
         <div className={css.mainCol}>
+          {tab === 'home' ? (
+            <MemoryHome
+              api={apiRef.current}
+              entries={homeEntries}
+              projects={projects}
+              tags={allTags}
+              summary={summary}
+              changes={changes}
+              nav={homeNav}
+              refresh={() => { void refresh() }}
+            />
+          ) : (
+          <>
           {/* 顶栏：搜索 + 统计 + 关闭 */}
           <div className={css.topbar}>
             <label className={css.topSearch} title={t('cmdK')}>
@@ -1965,6 +2068,18 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                         >
                           <SortArrowsIcon size={13} />
                         </button>
+                        <Tooltip label={t('deleteTodayHint')} side="top" delayMs={500}>
+                          <button
+                            type="button"
+                            className={`${css.toolBtn} ${css.toolBtnDanger}`}
+                            aria-label={t('deleteTodayHint')}
+                            disabled={busy || todayCount === 0}
+                            onClick={handleDeleteToday}
+                          >
+                            <EraserIcon size={13} />
+                            {t('deleteToday')}{todayCount > 0 ? ` (${todayCount})` : ''}
+                          </button>
+                        </Tooltip>
                         <Tooltip label={consolidating ? t('consolidating') : t('consolidateHint')} side="top" delayMs={500}>
                           <button
                             type="button"
@@ -2152,6 +2267,8 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                 onReset={() => { askConfirm(t('settingsResetConfirm'), () => { void resetConfig() }) }}
               />
             </div>
+          )}
+          </>
           )}
         </div>
       </div>
