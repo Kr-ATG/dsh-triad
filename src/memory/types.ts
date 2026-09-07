@@ -207,7 +207,7 @@ export const DEFAULT_CONFIG: MemoryConfig = {
   injectRefreshSteps: 8,
   dailyCompileEnabled: true,
   extractMaxChars: 6000,
-  minImportance: 6,
+  minImportance: 7,
   consolidateEnabled: true,
   // 增量演进模式：一次只整理「最近更新」的 20 条（对齐 ReMe auto_dream 的小撮
   // 单元策略）。20 条约 3-5K 字符：慢模型实测 ~230s 可完成（<300s 超时），

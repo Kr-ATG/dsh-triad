@@ -41,7 +41,7 @@ dsh plugin --profile web remove dsh-triad
 
 | 能力 | 实现 |
 | --- | --- |
-| 自动抽取 | 挂 `session/event`，每 `extractEveryTurns` 轮用 LLM 抽一次 |
+| 自动抽取 | 挂 `session/event`，每 `extractEveryTurns` 轮用 LLM 抽一次；prompt 明确禁止入库会话流水账（commit/发版/版本号）、仓库可查到的信息（依赖/路径/配置）与通用编程知识，`minImportance`（默认 7）以下丢弃 |
 | 语义检索 | 可选 embedding provider；关闭时退化为 TF-IDF 式打分 |
 | 自动注入 | 挂 `agent/pre-step`，`{ prepend: true }`，预算 `injectTokenBudget` |
 | 注入开关 | 对话框左端大脑按钮点开悬浮卡片：**本会话注入**（会话级覆盖，持久化 `state.json`）+ **默认开启**（`injectDefaultEnabled`，管新会话与未单独设置的会话）；单独设置过会显示角标并可一键「跟随默认」。同一开关也出现在面板「设置 · 注入」组 |
