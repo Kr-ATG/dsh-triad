@@ -71,7 +71,7 @@ const ctx = {
     listeners.get(event).push(handler)
     return () => {}
   },
-  get: () => undefined,
+  get: (name) => ctx[name],
   effect: (fn) => { fn?.(); return () => {} },
   settings: { get: () => ({ providers: {} }), register: () => () => {} },
   credentials: {},
@@ -103,6 +103,8 @@ need(paths.some(p => p.startsWith('/api/usage-stats')), 'usage routes registered
 need(paths.some(p => p.startsWith('/api/skill-manager')), 'skill routes registered (/api/skill-manager/*)')
 // 技能面板的开关与「Agent 预设」筛选条都打这条；漏了就全 404、面板顶部没有预设条。
 need(paths.some(p => p.startsWith('/api/skill-toggles')), 'skill toggle routes registered (/api/skill-toggles/*)')
+need(paths.some(p => p.startsWith('/api/triad-automation')), 'automation routes registered (/api/triad-automation/*)')
+need(tools.includes('automation'), 'automation tool registered')
 need(tools.includes('memory_search') && tools.includes('memory_remember'), 'memory tools registered')
 need(listeners.has('agent/pre-step'), 'agent/pre-step injection hooked')
 need(listeners.has('session/event'), 'session/event capture hooked')

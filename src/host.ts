@@ -1,16 +1,18 @@
 /**
  * dsh-triad — host half entry.
  *
- * Mounts three modules on one Cordis plugin:
+ * Mounts four modules on one Cordis plugin:
  *
- *  - memory  → local memory engine (LLM extraction, embedding retrieval,
- *              `agent/pre-step` injection, tools, `/api/dsh-memory/*`)
- *  - usage   → token-usage analytics + provider balances (`/api/usage-stats/*`)
- *  - skills  → skill bundle management (`/api/skill-manager/*`)
+ *  - memory     → local memory engine (LLM extraction, embedding retrieval,
+ *                 `agent/pre-step` injection, tools, `/api/dsh-memory/*`)
+ *  - automation → scheduled tasks: store + 60s scheduler + llm executor +
+ *                 agent tool + `/api/triad-automation/*` (ported from dsh-webui)
+ *  - usage      → token-usage analytics + provider balances (`/api/usage-stats/*`)
+ *  - skills     → skill bundle management (`/api/skill-manager/*`)
  *
  * The usage + skills halves are the already-proven `dsh-usage-skill` host,
- * vendored under `vendor/usage-skill/`. The memory engine is ported from
- * `dsh-webui`. No DSH source is modified.
+ * vendored under `vendor/usage-skill/`. The memory engine and the automation
+ * module are ported from `dsh-webui`. No DSH source is modified.
  *
  * Each module mounts inside its own try/catch: a failure in one must never
  * stop the others from mounting.
@@ -20,6 +22,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { applyMemory } from './memory/index.js'
 // @ts-expect-error — vendored JS half (no type declarations shipped)
 import { apply as applyUsageHost } from '../vendor/usage-skill/index.js'
+import { applyAutomationHost } from './automation/index.js'
 import { apply as applySkillToggles } from './skill-toggles.js'
 import { applySkillHealth } from './skill-health.js'
 import { applyMcpRecommended } from './mcp-recommended.js'
@@ -62,6 +65,17 @@ export async function apply(ctx: Context, config: TriadConfig = {}): Promise<voi
   } catch (error) {
     ctx.logger?.warn?.(
       `[dsh-triad] memory engine failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+    )
+  }
+
+  // ── 自动化（定时任务：存储 + 调度 + 执行 + 工具 + 路由）──────────────
+  // /api/triad-automation/*：侧边栏首行「自动化」入口的数据面。
+  try {
+    applyAutomationHost(ctx)
+    ctx.logger?.info?.('[dsh-triad] automation mounted')
+  } catch (error) {
+    ctx.logger?.warn?.(
+      `[dsh-triad] automation failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
     )
   }
 

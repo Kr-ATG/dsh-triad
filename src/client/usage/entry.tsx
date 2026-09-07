@@ -97,7 +97,7 @@ function SkillsEntry(): JSX.Element {
 }
 
 /** 导航行应用：用量入口 portal 到 nav host 的 usage 槽（独立行）；
- * 技能入口 portal 到「自动化」host 的 skills 槽——与自动化、记忆合成一行。 */
+ * 技能入口 portal 到 skills 槽——与自动化、记忆合成首行。 */
 function UsageSkillsNavApp(): JSX.Element | null {
   ensureNavStyles()
   return (

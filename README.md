@@ -1,12 +1,12 @@
 # dsh-triad
 
-**用量工作台 · 技能与 MCP Server 管理 · 长期记忆引擎** —— 一套插件装齐 DSH 三个工作台。
+**定时自动化 · 用量工作台 · 技能与 MCP Server 管理 · 长期记忆引擎** —— 一套插件装齐 DSH 四个工作台。
 
-从 [statem-li/dsh-webui](https://github.com/statem-li/dsh-webui) v0.5.1 拆出这三个模块，
+从 [statem-li/dsh-webui](https://github.com/statem-li/dsh-webui) v0.5.1 拆出这四个模块，
 按 DSH `0.1.2-alpha.1` 的现行契约重写为独立插件。全部通过 `cordis.patch.yml` 的
 bundle 机制挂载，**不碰官方源码一行**。
 
-> 装完侧边栏多出一行三个入口：`[用量] [技能] [记忆]`。
+> 装完侧边栏首行三个入口：`[自动化] [能力] [记忆]`，次行独立入口：`[用量]`。
 
 ---
 
@@ -35,7 +35,7 @@ dsh plugin --profile web remove dsh-triad
 
 ---
 
-## 三个模块
+## 四个模块
 
 ### 记忆
 

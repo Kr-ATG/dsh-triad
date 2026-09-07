@@ -2,10 +2,10 @@
  * sidebar-nav — 侧边栏导航区共享挂载器。
  *
  * 在 sidebar 的浏览区容器（`[data-slot="sidebar.workspaces"]`）正上方插
- * 一个 host，host 内按固定顺序（usage / skills / memory / team）放四个
- * `data-nav-slot` 槽位容器；各入口（usage / skills / memory 三个 React 组
- * 件，以及将来可能新增的 team）经 `useNavSlot` 轮询拿到自己的槽位后
- * `createPortal` 进去——顺序确定、互不覆盖、跟 React 首次提交不竞态。
+ * 一个 host，host 内按固定顺序（automation / skills / memory / usage / team）
+ * 放五个 `data-nav-slot` 槽位容器；各入口（automation / usage / skills /
+ * memory 四个 React 组件，以及将来可能新增的 team）经 `useNavSlot` 轮询拿到
+ * 自己的槽位后 `createPortal` 进去——顺序确定、互不覆盖、跟 React 首次提交不竞态。
  *
  * rail 折叠态由 `useRail` 观察 `data-shell-overlay` 框架容器的
  * `data-sidebar-collapsed` 属性切换，rail 下导航行收缩为图标钮。
@@ -25,15 +25,15 @@ const FRAME_SELECTOR = 'div:has(> [data-shell-overlay])'
 /**
  * nav host 的行布局：每个数组元素是一行，行内数组是并排的槽位。
  *
- *   [usage][skills][memory] 合并一行 → team 独立一行
+ *   [automation][skills][memory] 合并一行 → usage 独立一行 → team 独立一行
  *
- * 历史：dsh-webui 早期版本依赖一个被 DSH 0.1.2-alpha.1 砍掉的「自动化菜单」
- * host（grep 全空），把 skills/memory 塞在自动化 host 内部做合并行——
- * 卸载 webui 后那条路径已无可建 host。现在四个槽位全部由 dsh-triad 自己
- * 创建，合并行由本模块自建的 `.dsh-nav-row` 容器承载。
+ * 历史：自动化从 dsh-webui 提取归属本插件后，不再自建菜单 host（原
+ * `dsh-automation-menu-host` 已删除），首行即自动化占位（原用量位置，
+ * 用量下移一行独立成行）。合并行由本模块自建的 `.dsh-nav-row` 容器承载。
  */
 const SLOT_LAYOUT = [
-  ['usage', 'skills', 'memory'],
+  ['automation', 'skills', 'memory'],
+  ['usage'],
   ['team'],
 ] as const
 
@@ -138,7 +138,7 @@ export function ensureNavMount(): () => void {
 /** 轮询获取指定槽位容器（未就位时返回 null，组件据此暂不渲染）。
  *
  * 槽位可能直接挂在 nav host 下（独立行的 usage / team）或嵌在 `.dsh-nav-row`
- * 合并行容器里（skills / memory），因此全局按 data-nav-slot 查找——
+ * 合并行容器里（automation / skills / memory），因此全局按 data-nav-slot 查找——
  * 槽位名由本模块统一创建，唯一。
  *
  * **永不停止**：未就位时 100ms 阶梯快查（10 次后退 400ms）；找到后退化为
@@ -208,7 +208,7 @@ const SHEET = `
 /* nav host：各行纵向堆叠；独立行的槽位 display:contents，按钮直接撑满整行。 */
 #dsh-triad-nav-host{display:flex;flex-direction:column;align-items:stretch;width:100%}
 #dsh-triad-nav-host>[data-nav-slot]{display:contents}
-/* 合并行：[技能][记忆] 并排；槽位 display:contents 让按钮直接参与行布局，
+/* 合并行：[自动化][技能][记忆] 并排；槽位 display:contents 让按钮直接参与行布局，
    按钮等分整行（flex:1 1 0），与独立行的视觉节奏一致——
    否则收缩为内容宽时行尾会留出大片空白。 */
 .dsh-nav-row{display:flex;flex-wrap:wrap;align-items:stretch;gap:2px;padding:0 2px}
@@ -298,15 +298,15 @@ export function NavPortal({ name, children }: { name: NavSlotName; children: Rea
   return createPortal(children, slot)
 }
 
-/** 面板互斥 + 切会话自动收：三个入口共用的面板行为 hook。
+/** 面板互斥 + 切会话自动收：四个入口共用的面板行为 hook。
  *
- *  - 互斥：任一面板打开时广播，其余已打开的面板自动收回（用量/能力/记忆
+ *  - 互斥：任一面板打开时广播，其余已打开的面板自动收回（自动化/用量/能力/记忆
  *    同时只占住一个主区，不叠罗汉）；
  *  - 切会话自动收：面板盖住会话主区、无遮罩，侧栏保持可点；侧栏会话区内
  *    的点击（会话行/新会话/设置等，自己导航行与面板内部除外）直接收面板，
  *    跟「点会话回到会话」的直觉一致。
  */
-export type TriadPanelName = 'usage' | 'skills' | 'memory'
+export type TriadPanelName = 'automation' | 'usage' | 'skills' | 'memory'
 
 const PANEL_OPEN_EVENT = 'dsh-triad:panel-open'
 

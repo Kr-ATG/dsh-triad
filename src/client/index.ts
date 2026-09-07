@@ -1,12 +1,13 @@
 /**
  * dsh-triad — browser half entry.
  *
- * Mounts three modules, each isolated so a failure in one cannot take down
+ * Mounts four modules, each isolated so a failure in one cannot take down
  * the others:
  *
- *  - memory   → sidebar nav row + panel + composer inject toggle
- *  - usage    → sidebar nav row + workbench (usage / trend / accounts / signal)
- *  - skills   → sidebar nav row + panel + `/` slash source + skill tool row
+ *  - automation → sidebar nav row (first row) + scheduled-tasks panel + notifier
+ *  - memory     → sidebar nav row + panel + composer inject toggle
+ *  - usage      → sidebar nav row (second row) + workbench (usage / trend / accounts / signal)
+ *  - skills     → sidebar nav row + panel + `/` slash source + skill tool row
  *
  * All data comes from the host half's loopback-only HTTP routes via
  * same-origin fetch. No DSH source is modified.
@@ -15,6 +16,7 @@
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { applyMemoryClient } from './memory/index.js'
 import { apply as applyUsageEntries } from './usage/entry.js'
+import { applyAutomation } from './automation/index.js'
 import { apply as applySkillSource } from './skill-source/index.js'
 import { buildActivityGrid, activityColor, ACTIVITY_COLUMNS } from './usage/dashboard/ActivityGrid.js'
 
@@ -31,6 +33,7 @@ function safe(label: string, run: (ctx: ClientContext) => void, ctx: ClientConte
 }
 
 export function apply(ctx: ClientContext): void {
+  safe('automation', applyAutomation, ctx)
   safe('memory', applyMemoryClient, ctx)
   safe('usage', applyUsageEntries, ctx)
   safe('skills', applySkillSource, ctx)
