@@ -121,5 +121,5 @@ export function apply(ctx: ClientContext): void {
     const root = createRoot(holder)
     root.render(<UsageSkillsNavApp />)
     return () => { root.unmount() }
-  }, 'webui: usage/skills nav entries')
+  }, 'triad: usage/skills nav entries')
 }

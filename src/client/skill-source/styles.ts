@@ -1,12 +1,12 @@
-/** skill-source 的 SkillRow 注入样式(自内核 ui-skill 的 SkillRow.module.css 转写,类名加 webui- 前缀防冲突)。 */
+/** skill-source 的 SkillRow 注入样式(自内核 ui-skill 的 SkillRow.module.css 转写,类名加 triad- 前缀防冲突)。 */
 
 const CSS = `
-.webui-skill-card {
+.triad-skill-card {
   display: flex;
   flex-direction: column;
 }
 
-.webui-skill-row {
+.triad-skill-row {
   position: relative;
   overflow: hidden;
   display: flex;
@@ -15,11 +15,11 @@ const CSS = `
   min-width: 0;
 }
 
-.webui-skill-row[data-expandable] {
+.triad-skill-row[data-expandable] {
   cursor: pointer;
 }
 
-.webui-skill-card[data-state='running'] .webui-skill-row::after {
+.triad-skill-card[data-state='running'] .triad-skill-row::after {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
@@ -30,16 +30,16 @@ const CSS = `
     color-mix(in srgb, var(--dsw-alias-bg-base) 60%, transparent) 55%,
     transparent 100%
   );
-  animation: dsh-webui-skill-row-sweep 2.6s ease-out infinite;
+  animation: dsh-triad-skill-row-sweep 2.6s ease-out infinite;
   pointer-events: none;
 }
 
-@keyframes dsh-webui-skill-row-sweep {
+@keyframes dsh-triad-skill-row-sweep {
   0% { left: -300px; }
   90%, 100% { left: 100%; }
 }
 
-.webui-skill-leading {
+.triad-skill-leading {
   position: relative;
   flex: none;
   width: 16px;
@@ -51,17 +51,17 @@ const CSS = `
   color: var(--dsw-alias-label-tertiary);
 }
 
-.webui-skill-chevron {
+.triad-skill-chevron {
   color: var(--dsw-alias-label-secondary);
 }
 
-.webui-skill-iconIdle {
+.triad-skill-iconIdle {
   display: inline-flex;
   opacity: 1;
   transition: opacity 100ms ease;
 }
 
-.webui-skill-chevronHover {
+.triad-skill-chevronHover {
   position: absolute;
   inset: 0;
   margin: auto;
@@ -69,22 +69,22 @@ const CSS = `
   transition: opacity 100ms ease;
 }
 
-.webui-skill-row:hover .webui-skill-iconIdle {
+.triad-skill-row:hover .triad-skill-iconIdle {
   opacity: 0;
 }
 
-.webui-skill-row:hover .webui-skill-chevronHover {
+.triad-skill-row:hover .triad-skill-chevronHover {
   opacity: 1;
 }
 
-.webui-skill-title {
+.triad-skill-title {
   flex: none;
   font-size: 14px;
   line-height: 24px;
   color: var(--dsw-alias-label-secondary);
 }
 
-.webui-skill-separator {
+.triad-skill-separator {
   flex: none;
   width: 2px;
   height: 2px;
@@ -93,7 +93,7 @@ const CSS = `
   background: var(--dsw-alias-label-caption);
 }
 
-.webui-skill-summary {
+.triad-skill-summary {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -104,16 +104,16 @@ const CSS = `
   color: var(--dsw-alias-label-tertiary);
 }
 
-.webui-skill-errorSummary {
+.triad-skill-errorSummary {
   color: var(--dsw-alias-state-error-primary);
 }
 
-.webui-skill-bodyWrap {
+.triad-skill-bodyWrap {
   display: flex;
   flex-direction: column;
 }
 
-.webui-skill-instructionsCard {
+.triad-skill-instructionsCard {
   display: flex;
   flex-direction: column;
   max-height: 260px;
@@ -124,7 +124,7 @@ const CSS = `
   background: var(--dsw-alias-markdown-code-block);
 }
 
-.webui-skill-instructionsHeader {
+.triad-skill-instructionsHeader {
   flex: none;
   padding: 8px 12px;
   border-bottom: 1px solid var(--dsw-alias-border-l2);
@@ -137,7 +137,7 @@ const CSS = `
   letter-spacing: 0.04em;
 }
 
-.webui-skill-instructions {
+.triad-skill-instructions {
   min-height: 0;
   margin: 0;
   padding: 10px 12px 12px;
@@ -148,21 +148,21 @@ const CSS = `
   color: var(--dsw-alias-label-secondary);
 }
 
-.webui-skill-instructions[data-error] {
+.triad-skill-instructions[data-error] {
   color: var(--dsw-alias-state-error-primary);
 }
 
-.webui-skill-instructions::-webkit-scrollbar-thumb {
+.triad-skill-instructions::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   background-clip: padding-box;
   border-radius: 6px;
 }
 
-.webui-skill-instructions::-webkit-scrollbar-track {
+.triad-skill-instructions::-webkit-scrollbar-track {
   margin: 6px 0;
 }
 
-.webui-skill-inspectButton {
+.triad-skill-inspectButton {
   display: inline-flex;
   align-self: flex-start;
   align-items: center;
@@ -180,17 +180,17 @@ const CSS = `
   transition: opacity 100ms ease;
 }
 
-.webui-skill-card:hover .webui-skill-inspectButton,
-.webui-skill-inspectButton:focus-visible {
+.triad-skill-card:hover .triad-skill-inspectButton,
+.triad-skill-inspectButton:focus-visible {
   opacity: 1;
 }
 
-.webui-skill-inspectButton:hover {
+.triad-skill-inspectButton:hover {
   background: var(--dsw-alias-interactive-bg-hover-solid);
   color: var(--dsw-alias-label-primary);
 }
 
-.webui-skill-visuallyHidden {
+.triad-skill-visuallyHidden {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -200,14 +200,14 @@ const CSS = `
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .webui-skill-card[data-state='running'] .webui-skill-row::after {
+  .triad-skill-card[data-state='running'] .triad-skill-row::after {
     animation: none;
     display: none;
   }
 
-  .webui-skill-iconIdle,
-  .webui-skill-chevronHover,
-  .webui-skill-inspectButton {
+  .triad-skill-iconIdle,
+  .triad-skill-chevronHover,
+  .triad-skill-inspectButton {
     transition: none;
   }
 }
@@ -216,29 +216,29 @@ const CSS = `
 /** 注入 SkillRow 样式一次(幂等)。 */
 export function injectSkillRowStyles(): void {
   if (typeof document === 'undefined') return
-  if (document.getElementById('dsh-webui-skill-source-styles') !== null) return
+  if (document.getElementById('dsh-triad-skill-source-styles') !== null) return
   const style = document.createElement('style')
-  style.id = 'dsh-webui-skill-source-styles'
+  style.id = 'dsh-triad-skill-source-styles'
   style.textContent = CSS
   document.head.appendChild(style)
 }
 
-/** SkillRow 类名字典(与注入 CSS 的 webui- 前缀类一一对应)。 */
+/** SkillRow 类名字典(与注入 CSS 的 triad- 前缀类一一对应)。 */
 export const skillCss = {
-  card: 'webui-skill-card',
-  row: 'webui-skill-row',
-  leading: 'webui-skill-leading',
-  chevron: 'webui-skill-chevron',
-  iconIdle: 'webui-skill-iconIdle',
-  chevronHover: 'webui-skill-chevronHover',
-  title: 'webui-skill-title',
-  separator: 'webui-skill-separator',
-  summary: 'webui-skill-summary',
-  errorSummary: 'webui-skill-errorSummary',
-  bodyWrap: 'webui-skill-bodyWrap',
-  instructionsCard: 'webui-skill-instructionsCard',
-  instructionsHeader: 'webui-skill-instructionsHeader',
-  instructions: 'webui-skill-instructions',
-  inspectButton: 'webui-skill-inspectButton',
-  visuallyHidden: 'webui-skill-visuallyHidden',
+  card: 'triad-skill-card',
+  row: 'triad-skill-row',
+  leading: 'triad-skill-leading',
+  chevron: 'triad-skill-chevron',
+  iconIdle: 'triad-skill-iconIdle',
+  chevronHover: 'triad-skill-chevronHover',
+  title: 'triad-skill-title',
+  separator: 'triad-skill-separator',
+  summary: 'triad-skill-summary',
+  errorSummary: 'triad-skill-errorSummary',
+  bodyWrap: 'triad-skill-bodyWrap',
+  instructionsCard: 'triad-skill-instructionsCard',
+  instructionsHeader: 'triad-skill-instructionsHeader',
+  instructions: 'triad-skill-instructions',
+  inspectButton: 'triad-skill-inspectButton',
+  visuallyHidden: 'triad-skill-visuallyHidden',
 }

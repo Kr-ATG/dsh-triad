@@ -1,5 +1,5 @@
 /**
- * dsh-webui — 移动端响应式基础设施。
+ * dsh-triad — 移动端响应式基础设施。
  *
  * 统一「手机/窄屏」识别与全局覆盖，解决插件在手机浏览器上布局错乱的问题：
  *
@@ -52,7 +52,7 @@ export function useIsMobile(): boolean {
   return mobile
 }
 
-const STYLE_ID = 'dsh-webui-responsive-styles'
+const STYLE_ID = 'dsh-triad-responsive-styles'
 
 /**
  * 全局移动端覆盖样式。这里只放插件自身无法覆盖的宿主（DSH 设置面板）与
@@ -61,10 +61,10 @@ const STYLE_ID = 'dsh-webui-responsive-styles'
 const SHEET = `
 /* ── 移动端安全区变量：桌面 env()=0，无副作用；供全屏 sheet/浮钮/底部固定元素取用 ── */
 :root {
-  --webui-safe-top: env(safe-area-inset-top, 0px);
-  --webui-safe-right: env(safe-area-inset-right, 0px);
-  --webui-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --webui-safe-left: env(safe-area-inset-left, 0px);
+  --triad-safe-top: env(safe-area-inset-top, 0px);
+  --triad-safe-right: env(safe-area-inset-right, 0px);
+  --triad-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --triad-safe-left: env(safe-area-inset-left, 0px);
 }
 /* 本文件所有注入注释内严禁写出「星号紧跟正斜杠」组合，否则会提前闭合注释、
    拖垮后续规则；描述此风险时仅用文字，切勿真正写出该两字符序列。 */
@@ -150,7 +150,7 @@ export function injectResponsiveStyles(): () => void {
     const tag = document.createElement('style')
     tag.id = STYLE_ID
     tag.dataset.plugin = 'dsh-triad'
-    tag.dataset.pluginCss = 'webui/responsive'
+    tag.dataset.pluginCss = 'triad/responsive'
     tag.textContent = SHEET
     document.head.appendChild(tag)
     injected = true

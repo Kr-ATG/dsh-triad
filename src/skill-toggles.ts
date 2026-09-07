@@ -46,7 +46,7 @@ import { URL } from 'node:url'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Context } from '@deepseek-ai/cordis'
 
-/** Stable Cordis plugin name fragment (merged into webui host apply). */
+/** Stable Cordis plugin name fragment (triad host apply). */
 export const name = 'skill-toggles'
 
 /** Minimal webServer service view (same contract as skill-manager). */
@@ -75,7 +75,7 @@ const PRESET_FILE = '.preset-skills.json'
 const ROUTE_PREFIX = '/api/skill-toggles'
 const MAX_BODY_BYTES = 256 * 1024
 /** 闸门 provider 在每个 agent 层里的名字(同层唯一即可)。 */
-const MASK_PROVIDER = 'webui-preset-mask'
+const MASK_PROVIDER = 'triad-preset-mask'
 /** 账本里 preset 条目上限(preset 名单本身十几条量级)。 */
 const MAX_PRESET_ENTRIES = 50
 
@@ -712,7 +712,7 @@ export async function apply(ctx: PluginContext): Promise<void> {
     handler: (req: IncomingMessage, res: ServerResponse) => {
       void handle(ctx, req, res)
     },
-  }), 'webui: skill-toggles routes')
+  }), 'triad: skill-toggles routes')
 
   // 闸门:每个 agent 一个,注册进它自己的 scope 层。agents 服务缺失(裸组装)
   // 时降级为「只有全局层开关」,不影响路由。
@@ -742,5 +742,5 @@ export async function apply(ctx: PluginContext): Promise<void> {
       for (const agent of [...fibers.keys()]) remove(agent)
       maskInvalidators.clear()
     }
-  }, 'webui: skill-toggles preset masks')
+  }, 'triad: skill-toggles preset masks')
 }
