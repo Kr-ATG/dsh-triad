@@ -61,6 +61,29 @@ dsh plugin --profile web remove dsh-triad
   <br><em>记忆面板：全部记忆 / 变更 / 回收站，项目与分类，详情页含置顶、重要度、相关记忆与历史记录</em>
 </p>
 
+### 自动化
+
+侧边栏**首行第一个入口**（[自动化][能力][记忆] 合并行的首位），点开从侧栏右侧滑出
+TAB 式浮层卡片（窄屏回退底部 sheet），分「任务计划 / 运行记录」两个 Tab。
+
+- **任务计划**：工具栏「＋ 新建」创建任务（调度类型：单次 at / 固定间隔 every / 5 字段 cron；执行 prompt；绑定模型或留空用默认模型）+ **AI 待确认建议区**——Agent 通过 `automation` 工具发起的 create/update 先落为建议卡，用户二次确认后才生效（可在面板里开「免确认」）
+- **真实执行引擎**（host 半身）：CronStore 持久化到 `${DSH_HOME}/automation/dsh-triad/`
+  （首次启动自动迁移旧 `automation/dsh-webui/` 数据），服务进程内 60s tick 调度——**GUI 关闭照常触发**；到期任务经 `ctx.llm` 以绑定模型真实执行并记录运行历史；连续失败计数驱动退避，配置修订号乐观锁防运行中编辑错写
+- **运行记录**：每次执行落一条 jsonl 记录（success / error / skipped + 起止时间 + 输出摘要 + 完整产出全文回看）
+- **Agent 协作**：`automation` 工具供 Agent 列出全部任务、以自然语言建议新建/修改任务（经用户确认生效）、立即运行
+
+路由：`/api/triad-automation/*`（任务 CRUD / 建议确认 / 运行历史 / 完成事件 / 设置）
+
+<p align="center">
+  <img src="docs/screenshots/automation-panel.png" alt="自动化面板" width="720" />
+  <br><em>自动化面板：任务计划 / 运行记录双 Tab，任务卡（开关 / 计划 / 下次运行 / 最近历史）与 AI 待确认建议区</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/sidebar-nav.png" alt="侧边栏导航" width="360" />
+  <br><em>侧边栏首行 [自动化][能力][记忆] 合并入口 + 次行独立「用量」，与原生导航行同款几何</em>
+</p>
+
 ### 用量
 
 四个 Tab：**用量 / 趋势 / 账户 / 信号**，含面积图、环形图、仪表、热力图、排名条。
