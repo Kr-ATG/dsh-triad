@@ -259,15 +259,7 @@ const UNCATEGORIZED = '\u0000none'
 /** 一个技能包最多挂几个分类（与 host 的 CATEGORY_MAX_PER_BUNDLE 对齐）。 */
 const MAX_BUNDLE_CATEGORIES = 8
 
-/** 分类色板：同一分类名恒定同色，明暗主题都靠 color-mix 压底色。 */
-const CATEGORY_PALETTE = ['#4176e6', '#2fa46a', '#e8a33d', '#a05ce6', '#e0645b', '#1fa2b8', '#d9488f', '#7a8b3f']
-
-/** 分类名 → 色值：djb2 哈希取模，稳定、无需查表、新分类自动配色。 */
-function categoryColor(name: string): string {
-  let h = 5381
-  for (let i = 0; i < name.length; i += 1) h = ((h << 5) + h + name.charCodeAt(i)) | 0
-  return CATEGORY_PALETTE[Math.abs(h) % CATEGORY_PALETTE.length] ?? CATEGORY_PALETTE[0]!
-}
+/** 分类不做逐类配色：一个面板只有主题蓝一把刷子（彩虹色板实测太吵，已否）。 */
 
 /** 分类名单排序：按挂载的包数从多到少，同数按名字。 */
 function sortCategories(counts: Map<string, number>): string[] {
@@ -1939,11 +1931,9 @@ const css = {
   catChipRow: 'skm-cat-chip-row',
   catChipLabel: 'skm-cat-chip-label',
   catChip: 'skm-cat-chip',
-  catChipDot: 'skm-cat-chip-dot',
   catChipCount: 'skm-cat-chip-count',
   bundleCats: 'skm-bundle-cats',
   bundleCatTag: 'skm-bundle-cat-tag',
-  catDot: 'skm-cat-dot',
   catEditor: 'skm-cat-editor',
   catEmpty: 'skm-cat-empty',
   catSelected: 'skm-cat-selected',
@@ -2255,41 +2245,36 @@ const SHEET = `
 .skm-bundle-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;display:inline-flex;align-items:center;gap:6px}
 .skm-bundle-count{flex:none;font-size:11px;line-height:16px;color:var(--dsw-alias-label-secondary,#61666b);background:var(--dsw-alias-bg-module-platform,#f1f3f5);border-radius:999px;padding:0 8px;white-space:nowrap}
 /* ── 技能包分类：顶栏胶囊筛选 / 包名旁标签 / 分类编辑器 ─────────────────────── */
-/* 分类色一律走 --skm-cat（由 JS 按分类名哈希注入），未设时回落主题蓝，
-   所以「未分类」那颗胶囊自动是中性灰，不必为它单独写一套规则。 */
+/* 配色只走主题蓝一把刷子（与 .skm-tag 同语言）；分类名不参与配色——
+   彩虹色板实测视觉太吵，与面板其余部分打架，已否。 */
 .skm-stack-form{display:flex;flex-direction:column;gap:10px}
 .skm-cat-chip-row{flex:1 1 100%;order:3;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:2px;animation:skm-cat-row-in 220ms cubic-bezier(.2,.8,.2,1) both}
 @keyframes skm-cat-row-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .skm-cat-chip-label{flex:none;font-size:11.5px;line-height:18px;letter-spacing:.02em;color:var(--dsw-alias-label-tertiary,#81858c)}
 .skm-cat-chip{flex:none;display:inline-flex;align-items:center;gap:5px;height:26px;box-sizing:border-box;padding:0 9px;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.1));border-radius:999px;background:var(--dsw-alias-bg-base,#fff);color:var(--dsw-alias-label-secondary,#61666b);font-family:inherit;font-size:12px;line-height:18px;cursor:pointer;transition:color 150ms ease,border-color 150ms ease,background 150ms ease,box-shadow 200ms ease,transform 120ms ease}
-.skm-cat-chip:hover{border-color:color-mix(in srgb,var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5)) 52%,transparent);color:var(--dsw-alias-label-primary,#1f2430);transform:translateY(-1px)}
+.skm-cat-chip:hover{border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 52%,transparent);color:var(--dsw-alias-label-primary,#1f2430);transform:translateY(-1px)}
 .skm-cat-chip:active{transform:translateY(0) scale(.97)}
-.skm-cat-chip[data-active]{border-color:transparent;background:color-mix(in srgb,var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5)) 15%,transparent);color:var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5));font-weight:600;box-shadow:0 0 0 1px color-mix(in srgb,var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5)) 36%,transparent),0 2px 10px color-mix(in srgb,var(--skm-cat,#3d6be5) 20%,transparent)}
-.skm-cat-chip-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--skm-cat,var(--dsw-alias-label-tertiary,#81858c));transition:box-shadow 200ms ease}
-.skm-cat-chip[data-active] .skm-cat-chip-dot{animation:skm-cat-ping 900ms cubic-bezier(.2,.8,.2,1) 1}
-@keyframes skm-cat-ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--skm-cat,#3d6be5) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.skm-cat-chip[data-active]{border-color:transparent;background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 15%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5);font-weight:600;box-shadow:0 0 0 1px color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 36%,transparent),0 2px 10px color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 20%,transparent)}
 .skm-cat-chip-count{flex:none;min-width:16px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--dsw-alias-bg-module-platform,rgba(0,0,0,.05));color:var(--dsw-alias-label-tertiary,#81858c);font-size:10.5px;line-height:16px;font-variant-numeric:tabular-nums;transition:background 160ms ease,color 160ms ease}
-.skm-cat-chip[data-active] .skm-cat-chip-count{background:color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent);color:var(--skm-cat,var(--dsw-alias-state-business-primary,#3d6be5))}
+.skm-cat-chip[data-active] .skm-cat-chip-count{background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 22%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5)}
 /* 包名旁标签：整颗可点（点在标题行里，由 JS 分流成筛选而非展开），带入场弹入。 */
 .skm-bundle-cats{flex:none;display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
-.skm-bundle-cat-tag{display:inline-flex;align-items:center;gap:4px;height:19px;box-sizing:border-box;padding:0 7px;border-radius:999px;font-size:11px;line-height:17px;white-space:nowrap;cursor:pointer;color:var(--skm-cat,#3d6be5);background:color-mix(in srgb,var(--skm-cat,#3d6be5) 11%,transparent);border:1px solid color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent);animation:skm-cat-tag-in 200ms cubic-bezier(.2,.9,.3,1.1) both;transition:background 150ms ease,border-color 150ms ease,transform 120ms ease,box-shadow 180ms ease}
-.skm-bundle-cat-tag:hover{background:color-mix(in srgb,var(--skm-cat,#3d6be5) 20%,transparent);border-color:color-mix(in srgb,var(--skm-cat,#3d6be5) 45%,transparent);transform:translateY(-1px);box-shadow:0 2px 7px color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent)}
-.skm-bundle-cat-tag[data-active]{background:var(--skm-cat,#3d6be5);border-color:transparent;color:#fff;box-shadow:0 2px 9px color-mix(in srgb,var(--skm-cat,#3d6be5) 40%,transparent)}
+.skm-bundle-cat-tag{display:inline-flex;align-items:center;gap:4px;height:19px;box-sizing:border-box;padding:0 7px;border-radius:999px;font-size:11px;line-height:17px;white-space:nowrap;cursor:pointer;color:var(--dsw-alias-state-business-primary,#3d6be5);background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 11%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 22%,transparent);animation:skm-cat-tag-in 200ms cubic-bezier(.2,.9,.3,1.1) both;transition:background 150ms ease,border-color 150ms ease,transform 120ms ease,box-shadow 180ms ease}
+.skm-bundle-cat-tag:hover{background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 20%,transparent);border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 45%,transparent);transform:translateY(-1px);box-shadow:0 2px 7px color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 22%,transparent)}
+.skm-bundle-cat-tag[data-active]{background:var(--dsw-alias-state-business-primary,#3d6be5);border-color:transparent;color:#fff;box-shadow:0 2px 9px color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 40%,transparent)}
 @keyframes skm-cat-tag-in{from{opacity:0;transform:translateY(3px) scale(.94)}to{opacity:1;transform:none}}
-.skm-cat-dot{flex:none;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85}
-.skm-bundle-cat-tag[data-active] .skm-cat-dot{background:#fff}
 /* 分类编辑器 */
 .skm-cat-editor{display:flex;flex-direction:column;gap:8px;box-sizing:border-box;width:100%}
 .skm-cat-empty{margin:0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary,#81858c)}
 .skm-cat-selected{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:5px}
-.skm-cat-selected-tag{display:inline-flex;align-items:center;gap:5px;height:24px;box-sizing:border-box;padding:0 4px 0 9px;border-radius:999px;font-size:12px;line-height:20px;color:var(--skm-cat,#3d6be5);background:color-mix(in srgb,var(--skm-cat,#3d6be5) 12%,transparent);border:1px solid color-mix(in srgb,var(--skm-cat,#3d6be5) 26%,transparent);animation:skm-cat-tag-in 200ms cubic-bezier(.2,.9,.3,1.1) both}
+.skm-cat-selected-tag{display:inline-flex;align-items:center;gap:5px;height:24px;box-sizing:border-box;padding:0 4px 0 9px;border-radius:999px;font-size:12px;line-height:20px;color:var(--dsw-alias-state-business-primary,#3d6be5);background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 12%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 26%,transparent);animation:skm-cat-tag-in 200ms cubic-bezier(.2,.9,.3,1.1) both}
 .skm-cat-selected-name{white-space:nowrap}
 .skm-cat-remove{flex:none;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;padding:0;border:none;border-radius:50%;background:transparent;color:inherit;cursor:pointer;opacity:.6;transition:opacity 140ms ease,background 140ms ease,transform 140ms ease}
-.skm-cat-remove:hover{opacity:1;background:color-mix(in srgb,var(--skm-cat,#3d6be5) 22%,transparent)}
+.skm-cat-remove:hover{opacity:1;background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 22%,transparent)}
 .skm-cat-remove:active{transform:scale(.9)}
 .skm-cat-suggest{display:flex;flex-wrap:wrap;gap:4px}
 .skm-cat-preset{display:inline-flex;align-items:center;gap:3px;height:23px;box-sizing:border-box;padding:0 8px;border:1px dashed var(--dsw-alias-border-l2,rgba(0,0,0,.16));border-radius:999px;background:transparent;color:var(--dsw-alias-label-secondary,#61666b);font-family:inherit;font-size:11.5px;line-height:19px;cursor:pointer;transition:color 140ms ease,border-color 140ms ease,background 140ms ease,transform 120ms ease}
-.skm-cat-preset:hover:not(:disabled){color:var(--skm-cat,#3d6be5);border-color:color-mix(in srgb,var(--skm-cat,#3d6be5) 55%,transparent);border-style:solid;background:color-mix(in srgb,var(--skm-cat,#3d6be5) 9%,transparent);transform:translateY(-1px)}
+.skm-cat-preset:hover:not(:disabled){color:var(--dsw-alias-state-business-primary,#3d6be5);border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 55%,transparent);border-style:solid;background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 9%,transparent);transform:translateY(-1px)}
 .skm-cat-preset:active:not(:disabled){transform:translateY(0) scale(.96)}
 .skm-cat-preset:disabled{opacity:.4;cursor:default}
 .skm-cat-preset-plus{font-size:13px;line-height:16px;opacity:.7}
@@ -2939,9 +2924,8 @@ body[data-ds-dark-theme] .skm-bundle-missing{color:#f0c48a}
   .skm-bundle-empty-btn,.skm-bundle-missing-btn{transition:none}
   .skm-skill-card::before,.skm-skill-badge,.skm-skill-title,.skm-tag-status{transition:none}
   .skm-cat-chip-row{animation:none}
-  .skm-cat-chip[data-active] .skm-cat-chip-dot{animation:none}
   .skm-bundle-cat-tag,.skm-cat-selected-tag{animation:none}
-  .skm-cat-chip,.skm-bundle-cat-tag,.skm-cat-preset,.skm-cat-remove,.skm-cat-input,.skm-cat-chip-dot,.skm-cat-chip-count{transition:none}
+  .skm-cat-chip,.skm-bundle-cat-tag,.skm-cat-preset,.skm-cat-remove,.skm-cat-input,.skm-cat-chip-count{transition:none}
 }
 `
 
@@ -3294,8 +3278,7 @@ function CategoryEditor({ value, onChange, label }: {
       ) : (
         <ul className={css.catSelected} aria-label={label}>
           {value.map((name) => (
-            <li key={name} className={css.catSelectedTag} style={{ '--skm-cat': categoryColor(name) } as CSSProperties}>
-              <i className={css.catDot} aria-hidden="true" />
+            <li key={name} className={css.catSelectedTag}>
               <span className={css.catSelectedName}>{name}</span>
               <button
                 type="button"
@@ -3316,7 +3299,6 @@ function CategoryEditor({ value, onChange, label }: {
             key={preset}
             className={css.catPreset}
             disabled={full}
-            style={{ '--skm-cat': categoryColor(preset) } as CSSProperties}
             title={skillT('bundleCatAddPreset', { name: preset })}
             onClick={() => { add(preset) }}
           >
@@ -4356,7 +4338,6 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
               <button
                 type="button"
                 className={css.catChip}
-                data-neutral
                 data-active={activeCat === null || undefined}
                 aria-pressed={activeCat === null}
                 onClick={() => { setCatFilter(null) }}
@@ -4374,10 +4355,8 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                     className={css.catChip}
                     data-active={active || undefined}
                     aria-pressed={active}
-                    style={none ? undefined : ({ '--skm-cat': categoryColor(cat) } as CSSProperties)}
                     onClick={() => { setCatFilter(active ? null : cat) }}
                   >
-                    <i className={css.catChipDot} aria-hidden="true" />
                     {none ? t('bundleCatNone') : cat}
                     <span className={css.catChipCount}>{categoryCounts.get(cat) ?? 0}</span>
                   </button>
@@ -4651,9 +4630,7 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
                                     data-skm-cat={cat}
                                     data-active={activeCat === cat || undefined}
                                     title={t('bundleCatTip', { name: cat })}
-                                    style={{ '--skm-cat': categoryColor(cat) } as CSSProperties}
                                   >
-                                    <i className={css.catDot} aria-hidden="true" />
                                     {cat}
                                   </span>
                                 ))}
