@@ -209,8 +209,10 @@ export const css = {
   toggle: 'dsh-memory-toggle',
   toggleOn: 'dsh-memory-toggle-on',
   toggleOff: 'dsh-memory-toggle-off',
+  toggleWrap: 'dsh-memory-toggle-wrap',
   // ── 对话框注入开关的悬浮卡片 ──
   injectCard: 'dsh-memory-inject-card',
+  injectCardOn: 'dsh-memory-inject-card-on',
   injectHead: 'dsh-memory-inject-head',
   injectTitle: 'dsh-memory-inject-title',
   injectTag: 'dsh-memory-inject-tag',
@@ -578,6 +580,8 @@ const SHEET = `
 .dsh-memory-scope-badge svg{flex:none}
 
 /* ── 注入开关（composer 工具行）：iconButton 规格 ─────────────────── */
+/* wrap 包住按钮与卡片：卡片是其 DOM 后代，按钮↔卡片间移动不丢 hover。 */
+.dsh-memory-toggle-wrap{position:relative;display:inline-flex}
 .dsh-memory-toggle{flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:none;border-radius:6px;padding:0;background:transparent;cursor:pointer;color:var(--dsw-alias-label-tertiary,#9ca3af);box-sizing:border-box}
 .dsh-memory-toggle:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(65,118,230,.07))}
 .dsh-memory-toggle-on,.dsh-memory-toggle-on:hover{color:var(--dsw-alias-state-business-primary,#4176e6)}
@@ -590,23 +594,28 @@ const SHEET = `
 .dsh-memory-entry-card:focus-visible,.dsh-memory-entry-row:focus-visible,.dsh-memory-chip:focus-visible,
 .dsh-memory-search-clear:focus-visible,.dsh-memory-related-card:focus-visible,.dsh-memory-history-link:focus-visible,.dsh-memory-change-more:focus-visible,
 /* ── 对话框大脑按钮的悬浮卡片：本会话开关 + 默认开关 ─────────────────
-   卡片 portal 到 body，落在 .dsh-memory-panel 作用域之外，故自带一份
-   --m-* 变量（开关等子元素复用面板样式，否则会拿到未定义的 var）。 */
+   卡片挂在按钮 wrap 内（同 AI 浏览器 gate），落在 .dsh-memory-panel
+   作用域之外，故自带一份 --m-* 变量（开关等子元素复用面板样式，否则会
+   拿到未定义的 var）。常驻 DOM + visibility 过渡：hidden 时不参与命中，
+   鼠标划过其区域无误触；显隐走 160ms 位移+淡入。 */
 .dsh-memory-inject-card{
   --m-primary:var(--dsw-alias-state-business-primary,#4176e6);
   --m-text:var(--dsw-alias-label-primary,#1f2329);
   --m-text-2:var(--dsw-alias-label-secondary,#5b6068);
   --m-text-3:var(--dsw-alias-label-tertiary,#81858c);
   --m-border:var(--dsw-alias-border-l1,rgba(0,0,0,.08));
-  position:fixed;z-index:1150;width:272px;box-sizing:border-box;padding:10px 12px 9px;
+  position:absolute;left:-4px;bottom:calc(100% + 10px);z-index:1150;width:272px;box-sizing:border-box;padding:10px 12px 9px;
   border:1px solid var(--m-border);border-radius:12px;
   background:var(--dsw-static-neutral-bluish-00,#fff);
   box-shadow:var(--dsw-shadow-lv3,0 10px 34px rgba(15,23,42,.18));
-  font-family:inherit;color:var(--m-text);
-  animation:dsh-memory-inject-in .18s cubic-bezier(.2,.8,.2,1) both}
+  font-family:inherit;color:var(--m-text);text-align:left;
+  opacity:0;visibility:hidden;transform:translateY(6px) scale(.985);pointer-events:none;
+  transition:opacity .16s ease,transform .16s cubic-bezier(.2,.8,.2,1),visibility 0s linear .16s}
+.dsh-memory-inject-card-on{
+  opacity:1;visibility:visible;transform:none;pointer-events:auto;
+  transition:opacity .16s ease,transform .16s cubic-bezier(.2,.8,.2,1),visibility 0s}
 html[data-dsh-glass] .dsh-memory-inject-card{background:var(--dsw-static-neutral-bluish-00,#fff);backdrop-filter:none;-webkit-backdrop-filter:none}
 body[data-ds-dark-theme] .dsh-memory-inject-card{background:var(--dsw-static-neutral-bluish-1000,#16181d)}
-@keyframes dsh-memory-inject-in{from{opacity:0;transform:translateY(6px) scale(.985)}to{opacity:1;transform:none}}
 .dsh-memory-inject-head{display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--m-border)}
 .dsh-memory-inject-title{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--m-text-2)}
 .dsh-memory-inject-tag{margin-left:auto;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;line-height:16px}
@@ -621,7 +630,7 @@ body[data-ds-dark-theme] .dsh-memory-inject-card{background:var(--dsw-static-neu
 .dsh-memory-inject-follow{display:block;width:100%;margin:2px 0 4px;padding:5px 8px;box-sizing:border-box;border:1px dashed var(--m-border);border-radius:8px;background:transparent;color:var(--m-text-2);font-family:inherit;font-size:11.5px;line-height:16px;cursor:pointer;transition:border-color .15s ease,color .15s ease,background .15s ease}
 .dsh-memory-inject-follow:hover{border-color:var(--m-primary);color:var(--m-primary);background:color-mix(in srgb,var(--m-primary) 7%,transparent)}
 .dsh-memory-inject-foot{margin:2px 0 0;font-size:11px;line-height:15px;color:var(--m-text-3)}
-@media (prefers-reduced-motion:reduce){.dsh-memory-inject-card{animation:none}}
+@media (prefers-reduced-motion:reduce){.dsh-memory-inject-card,.dsh-memory-inject-card-on{transition:none}}
 .dsh-memory-switch:focus-visible,.dsh-memory-toggle:focus-visible{outline:none;box-shadow:0 0 0 2px rgba(65,118,230,.35)}
 
 /* ── 窄屏适配 ─────────────────────────────────────────────────────── */

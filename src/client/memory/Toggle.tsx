@@ -1,7 +1,11 @@
 /**
  * dsh-memory 注入开关（composer 输入框工具行左端）。
  *
- * 点大脑按钮弹出小卡片，卡片里两个开关：
+ * 悬停大脑按钮弹出小卡片（与 AI 浏览器 gate 同款交互）：
+ *  - hover 进入立即展开，移出延迟 120ms 收起（跨按钮↔卡片间隙不闪）；
+ *  - 悬停打开后点击 = 钉住（移开鼠标不收），再点或外点/Esc = 收起；
+ *  - 卡片常驻 DOM，显隐走 CSS visibility 过渡（160ms 位移+淡入）。
+ * 卡片里两个开关：
  *  - 本会话注入：只影响当前会话（host state.json 里的显式覆盖）；
  *  - 默认开启：config.injectDefaultEnabled，决定新会话与未单独设置过的会话。
  * 会话单独设置过时显示「已单独设置」角标，并可一键「跟随默认」清除覆盖
@@ -9,7 +13,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { InjectStateView, MemoryApi } from './api.js'
@@ -22,8 +25,8 @@ export type MemoryToggleProps =
   & InjectFace<MemoryApi>
   & PropsLocale<'dshMemory'>
 
-/** 卡片宽度（与 CSS 同步；用于视口内夹取）。 */
-const CARD_W = 272
+/** 悬停移出后的延迟收起（毫秒）：给鼠标跨过按钮↔卡片间隙留时间。 */
+const HIDE_DELAY_MS = 120
 
 /** 把 host 回包收敛成本地状态形状（缺字段按默认处理）。 */
 function toState(res: InjectStateView): InjectStateView {
@@ -42,11 +45,15 @@ export function MemoryToggle({ sessionId, t, ...api }: MemoryToggleProps): JSX.E
   // 一次就触发一轮）。与 Panel/Notify 的 apiRef 同款处理。
   const apiRef = useRef(api)
   apiRef.current = api
-  const btnRef = useRef<HTMLButtonElement | null>(null)
-  const cardRef = useRef<HTMLDivElement | null>(null)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  const hideTimer = useRef<number | null>(null)
   const [state, setState] = useState<InjectStateView>({ enabled: true, defaultEnabled: true, explicit: false })
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ left: number; bottom: number }>({ left: 8, bottom: 8 })
+  // 钉住（点击后悬停移出也不收）。pinnedRef 供 120ms 收起计时器闭包读取，
+  // 避免计时器读到调度时的过期值。
+  const [pinned, setPinned] = useState(false)
+  const pinnedRef = useRef(false)
+  pinnedRef.current = pinned
   const [busy, setBusy] = useState(false)
 
   const reload = useCallback((): void => {
@@ -97,109 +104,129 @@ export function MemoryToggle({ sessionId, t, ...api }: MemoryToggleProps): JSX.E
       .finally(() => { setBusy(false) })
   }, [sessionId])
 
-  /** 定位卡片：按钮正上方，左右夹进视口。 */
-  const place = useCallback((): void => {
-    const rect = btnRef.current?.getBoundingClientRect()
-    if (rect === undefined) return
-    setPos({
-      left: Math.max(8, Math.min(rect.left, window.innerWidth - CARD_W - 8)),
-      bottom: Math.max(8, window.innerHeight - rect.top + 8),
+  /** hover 进入按钮/卡片：立即展开并取消收起计时，顺带刷新最新开关状态。 */
+  const showCard = useCallback((): void => {
+    if (hideTimer.current !== null) {
+      window.clearTimeout(hideTimer.current)
+      hideTimer.current = null
+    }
+    setOpen(true)
+    reload()
+  }, [reload])
+
+  /** hover 移出：延迟 0.12 秒再收起，给鼠标跨过按钮↔卡片间隙留时间。 */
+  const scheduleCardHide = useCallback((): void => {
+    if (hideTimer.current !== null) window.clearTimeout(hideTimer.current)
+    hideTimer.current = window.setTimeout(() => {
+      hideTimer.current = null
+      if (!pinnedRef.current) setOpen(false)
+    }, HIDE_DELAY_MS)
+  }, [])
+
+  // 卸载时清掉未触发的收起计时器。
+  useEffect(() => () => {
+    if (hideTimer.current !== null) window.clearTimeout(hideTimer.current)
+  }, [])
+
+  /** 点击按钮：悬停打开时 = 钉住（移开不收）；已钉住 = 收起。 */
+  const togglePin = useCallback((): void => {
+    setPinned(prev => {
+      if (prev) { setOpen(false); return false }
+      setOpen(true)
+      return true
     })
   }, [])
 
-  // 外点 / Esc / 视口变化 → 收起或跟随重算位置。
+  // 外点 / Esc → 收起并解除固定（卡片与按钮都在 wrap 内，wrap 内点击不算外点）。
   useEffect(() => {
-    if (!open) return undefined
     const onDown = (event: PointerEvent): void => {
       const node = event.target as Node | null
       if (node === null) return
-      if (cardRef.current?.contains(node) === true || btnRef.current?.contains(node) === true) return
+      if (wrapRef.current?.contains(node) === true) return
       setOpen(false)
+      setPinned(false)
     }
-    const onKey = (event: KeyboardEvent): void => { if (event.key === 'Escape') setOpen(false) }
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') { setOpen(false); setPinned(false) }
+    }
     document.addEventListener('pointerdown', onDown, true)
     document.addEventListener('keydown', onKey)
-    window.addEventListener('resize', place)
     return () => {
       document.removeEventListener('pointerdown', onDown, true)
       document.removeEventListener('keydown', onKey)
-      window.removeEventListener('resize', place)
     }
-  }, [open, place])
+  }, [])
 
   const isOn = state.enabled !== false
   const isDefaultOn = state.defaultEnabled !== false
   const explicit = state.explicit === true
+  const button = (
+    <button
+      type="button"
+      className={isOn ? `${css.toggle} ${css.toggleOn}` : `${css.toggle} ${css.toggleOff}`}
+      aria-label={isOn ? t('injectOn') : t('injectOff')}
+      aria-pressed={isOn}
+      aria-expanded={open}
+      onClick={togglePin}
+    >
+      <BrainIcon size={14} />
+    </button>
+  )
   return (
-    <>
-      <Tooltip label={isOn ? t('injectOn') : t('injectOff')} side="top" delayMs={500}>
-        <button
-          ref={btnRef}
-          type="button"
-          className={isOn ? `${css.toggle} ${css.toggleOn}` : `${css.toggle} ${css.toggleOff}`}
-          aria-label={isOn ? t('injectOn') : t('injectOff')}
-          aria-pressed={isOn}
-          aria-expanded={open}
-          onClick={() => { if (!open) place(); setOpen(value => !value) }}
-        >
-          <BrainIcon size={14} />
-        </button>
-      </Tooltip>
-      {open && typeof document !== 'undefined' && createPortal(
-        <div
-          ref={cardRef}
-          className={css.injectCard}
-          style={{ left: pos.left, bottom: pos.bottom }}
-          role="dialog"
-          aria-label={t('injectCardTitle')}
-        >
-          <div className={css.injectHead}>
-            <span className={css.injectTitle}><BrainIcon size={13} />{t('injectCardTitle')}</span>
-            <span className={isOn ? `${css.injectTag} ${css.injectTagOn}` : `${css.injectTag} ${css.injectTagOff}`}>
-              {isOn ? t('injectStateOn') : t('injectStateOff')}
+    // 权限卡片展开期间不渲染 Tooltip：避免提示文字叠在卡片上（remount 无状态无感）。
+    <div ref={wrapRef} className={css.toggleWrap} onMouseEnter={showCard} onMouseLeave={scheduleCardHide}>
+      {open ? button : <Tooltip label={isOn ? t('injectOn') : t('injectOff')} side="top" delayMs={500}>{button}</Tooltip>}
+      <div
+        className={open ? `${css.injectCard} ${css.injectCardOn}` : css.injectCard}
+        role="dialog"
+        aria-label={t('injectCardTitle')}
+        aria-hidden={!open}
+      >
+        <div className={css.injectHead}>
+          <span className={css.injectTitle}><BrainIcon size={13} />{t('injectCardTitle')}</span>
+          <span className={isOn ? `${css.injectTag} ${css.injectTagOn}` : `${css.injectTag} ${css.injectTagOff}`}>
+            {isOn ? t('injectStateOn') : t('injectStateOff')}
+          </span>
+        </div>
+        <div className={css.injectRow}>
+          <span className={css.injectMain}>
+            <span className={css.injectLabel}>
+              {t('injectThisSession')}
+              {explicit && <span className={css.injectBadge}>{t('injectOverrideTag')}</span>}
             </span>
-          </div>
-          <div className={css.injectRow}>
-            <span className={css.injectMain}>
-              <span className={css.injectLabel}>
-                {t('injectThisSession')}
-                {explicit && <span className={css.injectBadge}>{t('injectOverrideTag')}</span>}
-              </span>
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isOn}
-              aria-label={t('injectThisSession')}
-              disabled={busy}
-              className={css.switch}
-              onClick={() => { pushSession(!isOn) }}
-            />
-          </div>
-          <div className={css.injectRow}>
-            <span className={css.injectMain}>
-              <span className={css.injectLabel}>{t('injectDefaultOn')}</span>
-              <span className={css.injectHint}>{t('injectDefaultHint')}</span>
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isDefaultOn}
-              aria-label={t('injectDefaultOn')}
-              disabled={busy}
-              className={css.switch}
-              onClick={() => { pushDefault(!isDefaultOn) }}
-            />
-          </div>
-          {explicit && (
-            <button type="button" className={css.injectFollow} disabled={busy} onClick={() => { pushSession(null) }}>
-              {t('injectFollowDefault')}
-            </button>
-          )}
-          <p className={css.injectFoot}>{t('injectCardFoot')}</p>
-        </div>,
-        document.body,
-      )}
-    </>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isOn}
+            aria-label={t('injectThisSession')}
+            disabled={busy}
+            className={css.switch}
+            onClick={() => { pushSession(!isOn) }}
+          />
+        </div>
+        <div className={css.injectRow}>
+          <span className={css.injectMain}>
+            <span className={css.injectLabel}>{t('injectDefaultOn')}</span>
+            <span className={css.injectHint}>{t('injectDefaultHint')}</span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isDefaultOn}
+            aria-label={t('injectDefaultOn')}
+            disabled={busy}
+            className={css.switch}
+            onClick={() => { pushDefault(!isDefaultOn) }}
+          />
+        </div>
+        {explicit && (
+          <button type="button" className={css.injectFollow} disabled={busy} onClick={() => { pushSession(null) }}>
+            {t('injectFollowDefault')}
+          </button>
+        )}
+        <p className={css.injectFoot}>{t('injectCardFoot')}</p>
+      </div>
+    </div>
   )
 }

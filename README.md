@@ -44,7 +44,7 @@ dsh plugin --profile web remove dsh-triad
 | 自动抽取 | 挂 `session/event`，每 `extractEveryTurns` 轮用 LLM 抽一次；prompt 明确禁止入库会话流水账（commit/发版/版本号）、仓库可查到的信息（依赖/路径/配置）与通用编程知识，`minImportance`（默认 7）以下丢弃 |
 | 语义检索 | 可选 embedding provider；关闭时退化为 TF-IDF 式打分 |
 | 自动注入 | 挂 `agent/pre-step`，`{ prepend: true }`，预算 `injectTokenBudget` |
-| 注入开关 | 对话框左端大脑按钮点开悬浮卡片：**本会话注入**（会话级覆盖，持久化 `state.json`）+ **默认开启**（`injectDefaultEnabled`，管新会话与未单独设置的会话）；单独设置过会显示角标并可一键「跟随默认」。同一开关也出现在面板「设置 · 注入」组 |
+| 注入开关 | 对话框左端大脑按钮**悬停弹出**悬浮卡片（与 AI 浏览器 gate 同款，160ms 位移+淡入）：**本会话注入**（会话级覆盖，持久化 `state.json`）+ **默认开启**（`injectDefaultEnabled`，管新会话与未单独设置的会话）；悬停打开后点击可钉住（移开鼠标不收），外点/Esc 收起。单独设置过会显示角标并可一键「跟随默认」。同一开关也出现在面板「设置 · 注入」组 |
 | 每日整合 | 衰减 + 命中加权 + 条目上限 + **闲置自动清理**（`pruneNeverHitDays`，默认 21 天：最后命中/创建距今满 N 天删除；置顶/已确认/手动/禁用豁免） |
 | 语义整理 | 增量小批（默认最近更新 20 条/次，对齐 ReMe auto_dream 策略）+ 整理前快照 + 变更流汇总记录 + 整理专用模型（面板下拉，可选） + `consolidate.log` 诊断 |
 | 相关记忆 | 详情面板「相关记忆」区：以目标条目内容为 query 走同一套 hybrid 检索，排除自身与已废弃（`GET /api/dsh-memory/related`） |
