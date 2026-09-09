@@ -262,6 +262,10 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
   const previous = filterDays(scoped, prevRange(range))
   const sum = sumTokens(filtered)
   const prevSum = sumTokens(previous)
+
+  /** 缓存读取量（命中命中率贡献项）与写入量（缓存填充项）分别汇总。 */
+  const cacheRead = filtered.reduce((a, d) => a + (d.cacheReadTokens ?? 0), 0)
+  const cacheWrite = filtered.reduce((a, d) => a + (d.cacheWriteTokens ?? 0), 0)
   const hitRate = averageCacheHitRate(filtered)
   const prevHitRate = averageCacheHitRate(previous)
   const avg = dailyAverage(filtered)
@@ -494,7 +498,7 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
       <div className={`${css.mainScroll} ${modalStaggerClass}`}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: compact ? '1fr' : 'minmax(0, 2.2fr) minmax(280px, 1fr)',
+          gridTemplateColumns: compact ? '1fr' : 'minmax(0, 1.9fr) minmax(280px, 1fr)',
           gap: 10,
           alignItems: 'start',
           minWidth: 0,
@@ -603,7 +607,7 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
             {/* ── 概览瓦片 ── */}
             <HubSection title={`${scopeLabel.replace(/\s/g, '')}概览`}>
               <div className={css.ovGrid}>
-                <div className={css.ovTile} style={{ animationDelay: '120ms' }}>
+                <div className={css.ovTile} style={{ animationDelay: '0ms' }}>
                   <span className={css.ovLabel}>日均 Tokens</span>
                   <span className={css.ovValue}>{formatUnits(avg)}</span>
                   {deltaAvg !== null && (
@@ -612,7 +616,7 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
                     </span>
                   )}
                 </div>
-                <div className={css.ovTile} style={{ animationDelay: '160ms' }}>
+                <div className={css.ovTile} style={{ animationDelay: '40ms' }}>
                   <span className={css.ovLabel}>工作时长</span>
                   <span className={css.ovValue}>{formatWorkDuration(activity.workMs)}</span>
                   {deltaWork !== null && (
@@ -621,7 +625,7 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
                     </span>
                   )}
                 </div>
-                <div className={css.ovTile} style={{ animationDelay: '200ms' }}>
+                <div className={css.ovTile} style={{ animationDelay: '80ms' }}>
                   <span className={css.ovLabel}>缓存量</span>
                   <span className={css.ovValue}>{formatUnits(sum.cache)}</span>
                   {deltaCache !== null && (
@@ -630,14 +634,14 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
                     </span>
                   )}
                 </div>
-                <div className={css.ovTile} style={{ animationDelay: '240ms' }}>
+                <div className={css.ovTile} style={{ animationDelay: '120ms' }}>
                   <span className={css.ovLabel}>活跃模型</span>
                   <span className={css.ovValue}>{String(rank.length)}</span>
                   <span style={{ fontSize: 11, lineHeight: '15px', fontFamily: MONO, color: rank.length === prevRank.length ? 'var(--dsw-alias-label-tertiary)' : 'var(--dsw-alias-label-secondary)' }}>
                     <CountChip delta={rank.length - prevRank.length} label={periodLabel} />
                   </span>
                 </div>
-                <div className={css.ovTile} style={{ animationDelay: '280ms' }}>
+                <div className={css.ovTile} style={{ animationDelay: '160ms' }}>
                   <span className={css.ovLabel}>异常日</span>
                   <span className={css.ovValue} style={{ color: anomalyCount > 0 ? 'var(--dsw-alias-state-error-primary)' : undefined }}>{String(anomalyCount)}</span>
                   <span style={{ fontSize: 11, lineHeight: '15px', fontFamily: MONO, color: anomalyCount === prevAnomalyCount ? 'var(--dsw-alias-label-tertiary)' : 'var(--dsw-alias-label-secondary)' }}>
@@ -659,16 +663,16 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
               ) : undefined}
             >
               <div style={{ ...panel(14, 8), alignItems: 'center' }}>
-                <Gauge percent={filtered.length > 0 ? hitRate : null} label="命中率" size={compact ? 140 : 168} />
+                <Gauge percent={filtered.length > 0 ? hitRate : null} label="命中率" size={compact ? 140 : 156} />
                 <div style={{ alignSelf: 'stretch', display: 'flex', borderTop: '1px solid var(--dsw-alias-border-l1)', paddingTop: 8 }}>
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontSize: 11, lineHeight: '16px', color: 'var(--dsw-alias-label-secondary)' }}>命中 Tokens</span>
-                    <span style={{ fontSize: 14, lineHeight: '20px', fontWeight: 600, fontFamily: MONO, color: 'var(--dsw-alias-label-primary)' }}>{formatUnits(sum.cache)}</span>
+                    <span style={{ fontSize: 11, lineHeight: '16px', color: 'var(--dsw-alias-label-secondary)' }}>缓存读取</span>
+                    <span style={{ fontSize: 14, lineHeight: '20px', fontWeight: 600, fontFamily: MONO, color: 'var(--dsw-alias-label-primary)' }}>{formatUnits(cacheRead)}</span>
                   </div>
                   <div style={{ width: 1, background: 'var(--dsw-alias-border-l2)', margin: '4px 0' }} />
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <span style={{ fontSize: 11, lineHeight: '16px', color: 'var(--dsw-alias-label-secondary)' }}>缓存读取 Tokens</span>
-                    <span style={{ fontSize: 14, lineHeight: '20px', fontWeight: 600, fontFamily: MONO, color: 'var(--dsw-alias-label-primary)' }}>{formatUnits(sum.cache)}</span>
+                    <span style={{ fontSize: 11, lineHeight: '16px', color: 'var(--dsw-alias-label-secondary)' }}>缓存写入</span>
+                    <span style={{ fontSize: 14, lineHeight: '20px', fontWeight: 600, fontFamily: MONO, color: 'var(--dsw-alias-label-primary)' }}>{formatUnits(cacheWrite)}</span>
                   </div>
                 </div>
               </div>
@@ -705,8 +709,8 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
               </div>
             </HubSection>
 
-            <HubSection title="供应商告警" meta={alerts.length > 0 ? `${alerts.length} 条` : '全部正常'}>
-              <div style={{ ...panel(12, 8), flex: '1 1 auto', minHeight: 0 }}>
+            <HubSection title="供应商告警" meta={alerts.length > 0 ? `${alerts.length} 条` : '全部正常'} action={<LinkButton onClick={onJumpAccounts}>余额/配额</LinkButton>}>
+              <div style={{ ...panel(12, 8) }}>
                 <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {alerts.length === 0 ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, lineHeight: '18px', color: 'var(--dsw-alias-label-secondary)' }}>
@@ -728,9 +732,6 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
                     </div>
                   ))}
                 </div>
-                <div style={{ marginTop: 2 }}>
-                  <LinkButton onClick={onJumpAccounts}>查看余额/配额</LinkButton>
-                </div>
               </div>
             </HubSection>
           </div>
@@ -739,7 +740,7 @@ export function TrendTab({ range, rangeLabel, onJumpAccounts, onJumpSignal, onJu
         {/* ── 新增：供应商趋势对比 + 用量构成 ── */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: compact ? '1fr' : 'minmax(0, 1.6fr) minmax(280px, 1fr)',
+          gridTemplateColumns: compact ? '1fr' : 'minmax(0, 1.4fr) minmax(280px, 1fr)',
           gap: 10, alignItems: 'start', minWidth: 0,
         }}>
           <HubSection title="供应商趋势对比" meta={`${scopeLabel} · Top ${lineProvs.length}`}>
