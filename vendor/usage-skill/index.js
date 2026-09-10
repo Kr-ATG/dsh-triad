@@ -348,16 +348,61 @@ function withLock(run) {
 //#endregion
 
 /**
+ * Read one persisted session's whole/delta event log across host generations.
+ *
+ * Older hosts expose `sessionPersistence.readFrom(id, fromSeq)`; DSH 0.1.5
+ * replaced the persistence seam with per-session handles
+ * (`open(id, "read")` → `handle.read(offset, length)` → `handle.close()`)
+ * and removed `readFrom`/`listSnapshots` entirely. Feature-detect so one
+ * bundle works on both.
+ *
+ * @param persistence - the `sessionPersistence` service.
+ * @param id - stored session id.
+ * @param offset - first logical seq to include (delta reads).
+ * @returns caller-owned event array in seq order.
+ */
+async function readPersistedEvents(persistence, id, offset = 0) {
+	if (typeof persistence.readFrom === "function") {
+		const { events } = await persistence.readFrom(id, offset);
+		return [...(events ?? [])];
+	}
+	const handle = await persistence.open(id, "read");
+	try {
+		const events = [];
+		let cursor = offset;
+		for (;;) {
+			const slice = await handle.read(cursor, 2000);
+			const batch = slice?.events ?? [];
+			if (batch.length === 0) break;
+			for (const event of batch) events.push(event);
+			const last = batch[batch.length - 1];
+			cursor = typeof last?.seq === "number" ? last.seq + 1 : cursor + batch.length;
+			if (batch.length < 2000) break;
+		}
+		return events;
+	} finally {
+		try {
+			await handle.close();
+		} catch {
+			/* teardown failure must not mask the read result */
+		}
+	}
+}
+
+/**
  * Collect per-day usage across live and persisted sessions, incrementally.
  *
  * Live sessions: fold only the in-memory events added since the last fold.
  * Persisted sessions: skipped when the backend's opaque revision is
- * unchanged (`sessionPersistence.listSnapshots`, falling back to always
- * reading the delta); when the revision changes, the new events are verified
- * to be contiguous with the last folded seq — a gap or an empty delta means
- * the log was truncated/rewritten, so the session is refolded from scratch.
- * Sessions that vanished are dropped, and a session switching between
- * live/persisted is refolded from scratch to stay exact.
+ * unchanged (DSH 0.1.5 `sessionPersistence.list()` snapshots carry
+ * `{ header, revision }`; older hosts exposed `listSnapshots()`, falling
+ * back to always reading the delta); when the revision changes, the new
+ * events are verified to be contiguous with the last folded seq — a gap or
+ * an empty delta means the log was truncated/rewritten, so the session is
+ * refolded from scratch. Sessions that vanished are dropped, and a session
+ * switching between live/persisted is refolded from scratch to stay exact.
+ * A failed per-session read keeps the previous fold — it must never erase
+ * history from the cache.
  */
 export async function collectUsage(ctx) {
 	return withLock(async () => {
@@ -405,52 +450,61 @@ export async function collectUsage(ctx) {
 					ctx.logger.warn(`usage-stats: listSnapshots failed, falling back to list(): ${String(error)}`);
 				}
 			}
-			const metas = snapshots !== null ? snapshots.map((entry) => entry.header) : await persistence.list();
-			const revisionOf = new Map();
-			if (snapshots !== null) for (const entry of snapshots) revisionOf.set(entry.header.id, entry.revision);
-			for (const meta of metas) {
-				persistedIds.add(meta.id);
-				if (attached.has(meta.id)) continue;
-				const state = cache.sessions[meta.id] ?? createUsageState();
-				const revision = revisionOf.get(meta.id);
-				const changed = state.kind !== "persisted" || (revision !== void 0 && revision !== state.revision) || revision === void 0;
-				if (changed) {
-					try {
-						const wasPersisted = state.kind === "persisted";
-						const fromSeq = wasPersisted ? state.consumed : 0;
-						const { events } = await persistence.readFrom(meta.id, fromSeq);
-						if (!wasPersisted) {
-							state.days = new Map();
-							state.hours = new Map();
-							state.openSteps = new Map();
-							state.lastSample = null;
-							state.currentModel = null;
-							state.consumed = 0;
-						}
-						const fresh = wasPersisted ? events.filter((event) => event.seq > (state.consumed ?? 0)) : events;
-						const contiguous = fresh.length === 0 ? state.consumed === 0 : fresh[0].seq === state.consumed + 1;
-						if (!contiguous && state.consumed > 0) {
-							// Log truncated or rewritten: refold the whole log.
-							state.days = new Map();
-							state.hours = new Map();
-							state.openSteps = new Map();
-							state.lastSample = null;
-							state.currentModel = null;
-							state.consumed = 0;
-							const { events: allEvents } = await persistence.readFrom(meta.id, 0);
-							applyUsageDelta(state, allEvents);
-							state.consumed = allEvents.length > 0 ? allEvents[allEvents.length - 1].seq : 0;
-						} else if (fresh.length > 0) {
-							applyUsageDelta(state, fresh);
-							state.consumed = fresh[fresh.length - 1].seq;
-						}
-						state.kind = "persisted";
-						if (revision !== void 0) state.revision = revision;
-					} catch (error) {
-						ctx.logger.warn(`usage-stats: reading persisted session "${meta.id}" failed: ${String(error)}`);
+			// DSH 0.1.5 `list()` returns `{ header, revision, sizeBytes }`
+			// snapshots while older hosts returned bare headers; normalize both.
+			const listed = snapshots !== null ? snapshots : await persistence.list();
+			const entries = [];
+			for (const item of listed ?? []) {
+				if (item === null || typeof item !== "object") continue;
+				const header = item.header !== void 0 ? item.header : item;
+				const id = header?.id;
+				if (typeof id !== "string" || id.length === 0) continue;
+				entries.push({ id, revision: item.revision });
+			}
+			for (const { id, revision } of entries) {
+				persistedIds.add(id);
+				if (attached.has(id)) continue;
+				const previous = cache.sessions[id];
+				// Unchanged opaque revision: keep the folded state, no I/O.
+				if (previous !== void 0 && previous.kind === "persisted" && revision !== void 0 && previous.revision === revision) continue;
+				try {
+					const state = previous ?? createUsageState();
+					const wasPersisted = state.kind === "persisted";
+					const fromSeq = wasPersisted ? state.consumed ?? 0 : 0;
+					const events = await readPersistedEvents(persistence, id, fromSeq);
+					if (!wasPersisted) {
+						state.days = new Map();
+						state.hours = new Map();
+						state.openSteps = new Map();
+						state.lastSample = null;
+						state.currentModel = null;
+						state.consumed = 0;
+						state.title = null;
 					}
+					const fresh = wasPersisted ? events.filter((event) => event.seq > (state.consumed ?? 0)) : events;
+					const contiguous = fresh.length === 0 ? state.consumed === 0 : fresh[0].seq === state.consumed + 1;
+					if (!contiguous && state.consumed > 0) {
+						// Log truncated or rewritten: refold the whole log.
+						state.days = new Map();
+						state.hours = new Map();
+						state.openSteps = new Map();
+						state.lastSample = null;
+						state.currentModel = null;
+						state.consumed = 0;
+						state.title = null;
+						const allEvents = await readPersistedEvents(persistence, id, 0);
+						applyUsageDelta(state, allEvents);
+						state.consumed = allEvents.length > 0 ? allEvents[allEvents.length - 1].seq : 0;
+					} else if (fresh.length > 0) {
+						applyUsageDelta(state, fresh);
+						state.consumed = fresh[fresh.length - 1].seq;
+					}
+					state.kind = "persisted";
+					if (revision !== void 0) state.revision = revision;
+					cache.sessions[id] = state;
+				} catch (error) {
+					ctx.logger.warn(`usage-stats: reading persisted session "${id}" failed: ${String(error)}`);
 				}
-				cache.sessions[meta.id] = state;
 			}
 		}
 		for (const id of Object.keys(cache.sessions)) {
