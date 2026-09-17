@@ -14,7 +14,8 @@
  * 由本插件接管,组件与文案照搬内核实现,样式改注入模式)。
  */
 
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 // Type-only: 拉入 inputTriggers 服务声明与 InputTriggerSource 契约。
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {

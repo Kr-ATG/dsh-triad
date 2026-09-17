@@ -7,7 +7,8 @@
  * 由 ctx.inject 等待；无会话时返回空列表（任务可留空 = 默认模型）。
  */
 
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
+import type { SessionId } from '@deepseek-ai/dsh-session/types'
 // Type-only：激活 modelDirectories 服务的 Context 合并声明。
 import type {} from '@deepseek-ai/dsh-client-ui-model-selection/client'
 import type { ModelProviderGroup } from '@deepseek-ai/dsh-api-remotes/client'

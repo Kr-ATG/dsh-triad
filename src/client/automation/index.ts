@@ -8,7 +8,7 @@
 
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { AutomationApp } from './AutomationApp.tsx'
 import { applyAutomationNotifier } from './Notifier.tsx'
 import { ensureNavMount } from '../sidebar-nav.js'

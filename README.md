@@ -3,7 +3,7 @@
 **定时自动化 · 用量工作台 · 技能与 MCP Server 管理 · 长期记忆引擎** —— 一套插件装齐 DSH 四个工作台。
 
 从 [Kr-ATG/dsh-webui](https://github.com/Kr-ATG/dsh-webui) v0.5.1 拆出这四个模块，
-按 DSH `0.1.2-alpha.1` 的现行契约重写为独立插件。全部通过 `cordis.patch.yml` 的
+按 DSH `0.1.6-alpha.1` 的现行契约重写为独立插件。全部通过 `cordis.patch.yml` 的
 bundle 机制挂载，**不碰官方源码一行**。
 
 > 装完侧边栏首行三个入口：`[自动化] [能力] [记忆]`，次行独立入口：`[用量]`。
@@ -126,15 +126,69 @@ TAB 式浮层卡片（窄屏回退底部 sheet），分「任务计划 / 运行�
   灰色「已停用」标签 + 标题降饱和，带过渡），只有切到「已启用 / 已停用」或搜索时才裁剪。
   旧版在「全部」档也按启用状态过滤，技能一关就从列表里消失，只能切档去捞回来。
   `/` 斜杠菜单仍只列可调用的技能（禁用 = 不可调用，与宿主闸门一致）。
-- **MCP**：MCP Server 管理——添加/启停/会话自启动（localStorage 持久化）、
-  **推荐 MCP Server 目录**（`GET /api/mcp-recommended`：官方 modelcontextprotocol/servers
-  + 社区 MCP Registry 合并去重，离线兜底内置清单，5 分钟缓存）、联网搜索
-  （`/search?q=`）、GitHub repo 解析（`/resolve?repo=`，用于一键「添加」）、
-  真实注册列表（`GET/POST /api/triad/mcp-status{,/config}`）支持**启用/禁用与删除
-  （移除 cordis.patch.yml 条目，热重载生效，删除前确认弹窗）**、
-  工具列表 / 连接日志 / 配置模板、MCP 快速了解引导。
+- **MCP**：MCP Server 管理，**页面与技能页同构**——顶部 Agent 预设 chips（全部 + 各预设，
+  数字 = 该层可见 Server 数，有单独设置时角标变黄）+ 全部/已启用/已停用状态分段，
+  主区四张统计卡（管理的 Server / 全局 Server / 预设专属 / 连接状态）、当前编辑层提示行
+  （预设层多一个「清空该预设的单独设置」）、搜索（Server 名或工具名）+ 刷新 + 添加。
+  列表固定两块：**继承的全局 Server**（全局层开关 = 启用/禁用；预设层开关 = 遮蔽）
+  与**该预设专属 Server**（只对该预设生效，可移除）。
+- **遮蔽双保险**：预设遮蔽（关掉某个继承来的全局 Server）除了 agent 作用域的
+  `tools.restrict`，装配过滤也会按同一份账本把它的工具从模型工具目录剔除 ——
+  下一次组装即生效，不再依赖 per-agent 补丁是否装成功；补丁安装失败会被记录，
+  面板在「已遮蔽但运行期没拒到工具 / 安装报错 / 该预设无活动会话」时直接说明。
+- **一键全禁**：预设专属 MCP 卡片头部有「全部工具」滑块，一下关掉该 MCP 的全部
+  工具（只关工具、保留连接），再点一下全开；部分禁用时 tooltip 会说明。
+- **MCP 单工具级启停（按「行」记账）**：每张 Server 卡片列出该 MCP 提供的
+  **全部工具名**，**绿 = 启用、灰 = 禁用，点一下工具名即切换**
+  （`PUT /api/triad/mcp-tools/<server>`，可选 `preset` / `source`）。范围跟着面板
+  顶部的筛选条走：「全部 Agent」写**全局行**（所有共享它的预设生效）；某个预设写
+  **预设层**，并区分是哪条行 —— 继承来的全局行（`source: inherit`）还是该预设自带的
+  同名行（`source: own`）。**同名 Server 也就是两套独立账目**：全局 `context7` 与预设
+  自带的 `context7` 各灰各的，点一边不会带上另一边；撤掉其中一条行时，另一条的设置
+  各自生效（`inherit` 就是「本预设不要全局那份」的持久表达）。
+  **全局一票否决**：在「全部 Agent」层关掉的工具，所有预设都**彻底不可见、不可调用**
+  （预设层只能加禁、不能打开）；预设视图里这些工具强制**置灰不可拨动**并打「全局已停用」
+  标签，宿主对「预设层强行打开」的请求直接返回 409。**偏好记忆**：全局关闭不会动各预设
+  原有的遮蔽设置 —— 全局重新开启时，之前遮蔽的依然遮蔽、之前开启的依然继承，无需逐个重配。
+  关掉的工具从模型工具目录里消失（native 目录直接少一条；PTC 等非 native 模式
+  下生成的 SDK 也不再声明它，直接调用被拒），而 server 连接、其它工具都不受影响。
+  账本：`${DSH_HOME}/mcp/dsh-triad/tool-disable.json`
+  `{ version: 3, disabled: { <server>: [...] },
+     presets: { <preset>: { <server>: { own: [...], inherit: [...] } } },
+     known: { <server>: [...] } }`（v2 文件读入即自动升级）——`known` 是工具名单缓存：
+  预设自带的工具在没有活动会话时也能列出来（被禁用的也能点回来）。工具改名后旧名
+  自然失效、不误伤新工具。MCP 页主区自适应滚动，卡片/工具再多也能滚到底。
+  **添加/启用后自动等工具注册**：写配置只是让 DSH 热重载那一行，MCP 进程要晚几秒
+  才连上并注册工具 —— 面板会自动轮询（2s 一轮，**按实际注册数**判定就绪，
+  目标报出工具即停，最长 150s，npx 首次拉包也够），期间显示
+  「正在等待「xxx」连接并注册工具…」；还没注册完的卡片打「等待注册」标记，
+  数量与工具名先按名单缓存显示，注册完成自动变成实际值 —— 全程不用手动点刷新。
+  全局启停/删除走
+  `GET/POST /api/triad/mcp-status{,/config}`（移除 cordis.patch.yml 条目、热重载、
+  删除前确认弹窗）。**不再有** 工具列表 / 连接日志 / 配置模板 三个侧边子页与
+  MCP 快速了解引导浮层（模板对"复制一份改改就能用"的接入流程没有价值）。
+- **MCP 全局 / 预设分层**（0.1.6）：MCP 页加「Agent 预设范围」切换条——
+  - **预设专属 Server**（`POST/DELETE /api/triad/mcp-presets/*`）：写进该预设的
+    `agent.cordis.yml`，独立连接、只对该预设与其子代理可见；预设文件改动对新会话生效。
+    **随 DSH 安装的四个默认预设与用户自写预设同等可读写**（路径取自
+    `agentPresets.list()[].path`，不再区分"官方/我的"；升级 DSH 可能覆盖安装目录里的改动）。
+  - **预设遮蔽**（`PUT /api/triad/mcp-masks/*`，账本
+    `~/.dsh/mcp/dsh-triad/preset-masks.json`）：对某个预设隐藏全局 Server 的工具、
+    服务器指令与资源读取（三处同名遮蔽，agent 作用域内生效）；**全局连接保留**，
+    要「不连接」请改用专属 Server。同名自带 Server 优先于遮蔽（不误伤）。
+- **粘贴添加 MCP**（`POST /api/triad/mcp-preview` 校验预览）：
+  - **JSON**：其它 harness 的 `.mcp.json` 形态（`{ "mcpServers": { … } }`，裸映射亦可），
+    一次可粘多个；transport 自动推断（显式 `type`/`transport` 优先，http/sse 归一
+    streamable-http，否则 `command`→stdio、`url`→http）。
+  - **YAML**（DSH 原生，js-yaml 校验、报错带行号）：`mcpServers:` 映射，或
+    `mcp-client` 行片段（含 `- insert:` 包裹），`!!js` 表达式原样保留。
+  - `${VAR}` 占位在落盘时转成 `!!js '` 模板`` （loader 求值）；全局落点 =
+    `cordis.patch.yml`（热重载），预设落点 = 该预设组合文件；重名 serverName 自动跳过
+    （旧的单条结构化接口仍保留，重名报错）。
 
 路由：`/api/skill-manager/*`（集合管理）、`/api/skill-toggles/*`（开关与预设覆盖）、
+`/api/triad/mcp-presets/*`（预设专属 Server）、`/api/triad/mcp-masks/*`（预设遮蔽）、
+`/api/triad/mcp-preview`（粘贴解析校验）、
 `/api/mcp-recommended{,/search,/resolve}`
 
 <p align="center">
@@ -142,7 +196,8 @@ TAB 式浮层卡片（窄屏回退底部 sheet），分「任务计划 / 运行�
   <br><em>SKILL 视图：Agent 预设分类与快捷筛选、统计卡、技能包分组、技能卡（开关 / 全局 / 工具行）与快速上手指南</em>
   <br><br>
   <img src="docs/screenshots/mcp-manager.png" alt="MCP 管理" width="720" />
-  <br><em>MCP 视图：MCP Server 总数 / 已启用 / 可用工具 / 运行中统计，Server 列表（启停、自启动、删除），推荐目录 / 工具列表 / 连接日志 / 配置模板</em>
+  <br><em>MCP 视图：与技能页同构——Agent 预设 chips + 状态分段、四张统计卡、编辑层提示行、
+  搜索与添加，列表分「继承的全局 Server」（预设层开关 = 遮蔽）与「该预设专属 Server」两块</em>
 </p>
 
 > 技能在 webui 里原本是**两个独立 host 模块**（`skill-manager` 与 `skill-toggles`），
@@ -212,6 +267,11 @@ pnpm build
 
 改完源码后记得重新构建并提交 `lib/`，否则安装方拿到的还是旧产物。
 
+跑测试：`pnpm test`（技能管理 / 技能开关 / MCP 分层三个脚本）。测试脚本直接执行
+构建产物 `lib/index.js`，而宿主半身刻意保留了 `@deepseek-ai/dsh-util-crypto`
+这一个运行时外置包——**在 DSH profile 内或把它链接进本目录 `node_modules/@deepseek-ai/`
+之后**测试才可运行（`lib/` 提交产物本身不受影响，装在 profile 里时由 DSH 解析）。
+
 产物：
 
 | 文件 | 格式 | 说明 |
@@ -226,8 +286,8 @@ checkout 的 pnpm store（贡献者便利）→ 明确报错提示 `pnpm install
 
 - **`lib/index.js`**：自包含。除 `node:*` 内置模块外，留给运行时解析的只有
   `@deepseek-ai/dsh-util-crypto`（一个零依赖的 UUID 工具，DSH 有真实产物）。
-  `yauzl` 内联（配 `createRequire` banner 解决 CJS 依赖在 ESM 产物里的
-  `Dynamic require`）。
+  `yauzl`（账单解析）与 `js-yaml`（粘贴 YAML 校验，版本 `^4.1.0` 与 DSH 对齐）
+  都内联（配 `createRequire` banner 解决 CJS 依赖在 ESM 产物里的 `Dynamic require`）。
 - **`lib/client.js`**：`react` / `react-dom` / `react/jsx-runtime` /
   `@deepseek-ai/dsh-client-*` 全部 external，由 DSH 模块表提供同一份实例。
 

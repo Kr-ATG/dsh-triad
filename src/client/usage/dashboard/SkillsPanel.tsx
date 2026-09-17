@@ -193,6 +193,76 @@ const SKILL_ZH: Record<string, string> = {
   mcpLiveToolsOf: '工具',
   mcpLiveRefresh: '刷新',
   mcpLiveConfigHint: '添加：编辑 cordis.patch.yml（或使用「添加 MCP Server」生成配置片段）',
+  // 预设维度（0.1.6）：全局 / 预设专属 / 遮蔽
+  mcpScopeTitle: 'Agent 预设范围',
+  mcpScopeHintAll: '当前查看全局 Server（所有预设共用）。选择某个预设，可管理它专属的 Server 与遮蔽。',
+  mcpPresetGlobalSection: '继承的全局 Server',
+  mcpPresetOwnSection: '该预设专属 Server',
+  mcpPresetMasked: '已遮蔽',
+  mcpPresetMaskState: '继承全局（未遮蔽）',
+  mcpPresetMaskHint: '关掉开关 = 对该预设遮蔽：工具、服务器指令与资源读取都隐藏；全局连接保留（要「不连接」请改用「专属 Server」）。',
+  mcpPresetCovered: '已被本预设同名 Server 覆盖',
+  mcpPresetOwnHint: '专属 Server 写进该预设的组合文件：独立连接，仅该预设与其子代理可见。',
+  mcpAddServerGlobal: '添加 MCP Server（全局）',
+  mcpAddGlobalHint: '全局 Server 对所有预设生效；只想给当前预设用，请点左侧的「添加专属 Server」。',
+  mcpOwnRemoveConfirmTitle: '移除该预设专属 Server？',
+  mcpOwnRemoveConfirmMsg: '将从「{name}」的组合文件里删掉这一行 mcp-client 条目（改前自动备份），对该预设的新会话生效；全局的同名 Server 不受影响。',
+  // 同名覆盖：预设自带同名 Server 时的遮蔽开关与提示
+  mcpPresetCoveredSwitchHint: '遮蔽全局这一条。该预设自带同名 Server，工具仍由它提供 —— 要一起关掉请移除下方「该预设专属 Server」。',
+  mcpPresetCoveredMasked: '已遮蔽全局这一条 · 工具仍由该预设同名 Server 提供',
+  mcpPresetShadowGlobalTag: '同名全局',
+  mcpPresetShadowGlobalTip: '全局也有一台同名 Server。本预设用自带的这台，两边的工具开关各记各的账（互不影响）。',
+  mcpPresetOwnEmpty: '该预设还没有专属 Server',
+  mcpPresetStorageHint: '该预设随 DSH 安装目录存放：一样可读写；升级 DSH 可能覆盖它。',
+  mcpPresetAddOwn: '添加专属 Server',
+  mcpPresetNewSession: '预设文件改动对新会话生效',
+  mcpPresetFailed: '操作失败：{message}',
+  // MCP 页（与技能页同构）：统计卡 / 提示行 / 工具条
+  mcpStatManaged: '管理的 Server', mcpStatManagedDesc: '您接入的 MCP Server 总数',
+  mcpStatGlobal: '全局 Server', mcpStatGlobalDesc: '所有 Agent 预设共用',
+  mcpStatOwn: '预设专属', mcpStatOwnDesc: '只在某个预设内生效',
+  mcpStatHealth: '连接状态', mcpStatHealthDesc: '已停用的条目不计入工具',
+  mcpHealthOk: '全部运行中', mcpHealthWarn: '{n} 个已停用',
+  mcpScopeAllTip: '全部 Agent：{n} 个全局 Server（所有预设共用）',
+  mcpScopePresetTip: '该预设可见 {n} 个 Server',
+  mcpScopeOverrideCount: '{n} 项单独设置',
+  mcpScopeHintScoped: '当前编辑「{name}」：专属 Server 只对这个预设生效；开关 = 遮蔽它继承的全局 Server，其它预设不受影响。',
+  mcpWaitingTools: '正在等待「{names}」连接并注册工具…（自动刷新中，无需手动点刷新）',
+  mcpToolsPendingReg: '等待注册',
+  mcpToolsPendingRegTip: '工具名来自历史缓存：进程还在连接，注册完成后数量会自动更新为实际值。',
+  // 全局一票否决（工具级）
+  mcpToolGlobalOff: '全局已停用',
+  mcpToolGlobalOffTip: '全局已停用：该工具在「全部 Agent」层被关闭 —— 一票否决，所有预设都不可见、不可调用（预设层不可拨动）。各预设原有的个性化设置已保留，全局恢复后自动还原。',
+  // 一键全禁 / 全开
+  mcpToolAllAria: '「{name}」的全部工具',
+  mcpToolAllEnable: '开启该 MCP 的全部工具',
+  mcpToolAllDisable: '一键禁用该 MCP 的全部工具（只关工具，保留连接）',
+  mcpToolAllPartial: '部分工具已禁用',
+  // 遮蔽安装诊断
+  mcpMaskInstallFailed: '遮蔽未在运行期生效：{message}',
+  mcpMaskNoAgent: '遮蔽已写入，但该预设当前没有活动会话 —— 新会话起生效。',
+  mcpMaskNoDeny: '遮蔽已写入，但运行期还没拒到任何工具（该 MCP 可能尚未注册工具）。若对话里仍能看到它的工具，请重开会话或重启 DSH。',
+  mcpSearchServers: '搜索 Server 名称或工具…',
+  mcpListFilteredEmpty: '没有符合筛选条件的 Server',
+  mcpToolsUnavailable: '工具不可用',
+  // 工具级启停（卡片上的工具 chips）
+  mcpToolsHint: '点击工具名可单独启停：绿 = 启用，灰 = 禁用。',
+  mcpToolChipsAria: '「{name}」提供的工具',
+  mcpToolClickEnable: '点击启用该工具',
+  mcpToolClickDisable: '点击禁用该工具',
+  mcpToolDisabledCount: '{n} 个工具已禁用',
+  // 粘贴添加（JSON / DSH 原生 YAML）
+  mcpPasteHint: '粘贴其它 harness 的 JSON（.mcp.json 的 mcpServers 映射）或 DSH 原生 YAML（也接受 mcp-client 行片段）；写入 {scope}。',
+  mcpPasteScopeGlobal: '全局 profile patch（所有预设共用，热重载即时生效）',
+  mcpPasteScopePreset: '预设专属',
+  mcpPasteFormat: '粘贴格式',
+  mcpPasteNative: '原生',
+  mcpPasteParsed: '解析出 {n} 个 server：{names}',
+  mcpPasteCheck: '校验并预览',
+  mcpPasteChecking: '校验中…',
+  mcpPasteAdding: '写入中…',
+  mcpPasteAdded: '已添加 {added} 个，跳过 {skipped} 个已存在',
+  mcpPasteFailed: '添加失败',
   mcpRemoveConfirmTitle: '移除 MCP Server',
   mcpRemoveConfirmMsg: '将从 cordis.patch.yml 中删除「{name}」条目，其工具随即注销且不可恢复；如需恢复请重新添加。',
   mcpLiveRemoveFailed: '移除失败（配置写保护或条目缺失）',
@@ -329,6 +399,16 @@ function CatAllIcon({ size = 16 }: { size?: number }): JSX.Element {
   )
 }
 
+/** 小锁：该工具在「全部 Agent」层被停用（全局一票否决，预设层不可拨动）。 */
+function LockGlyph({ size = 10 }: { size?: number }): JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" {...catStroke()} strokeWidth={2}>
+      <rect x="5" y="10.5" width="14" height="9" rx="2.4" />
+      <path d="M8.2 10.5V8.4a3.8 3.8 0 0 1 7.6 0v2.1" />
+    </svg>
+  )
+}
+
 /** 拖放云图标。 */
 function CloudUpIcon({ size = 18 }: { size?: number }): JSX.Element {
   return (
@@ -367,15 +447,6 @@ function ArrowRightIcon({ size = 13 }: { size?: number }): JSX.Element {
   )
 }
 
-/** MCP 占位图标：插头 + 连接线。 */
-function McpPlugIcon(): JSX.Element {
-  return (
-    <svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-      <path d="M7.5 4.5v3M16.5 4.5v3M6 7.5h12v2.5a6 6 0 0 1-6 6 6 6 0 0 1-6-6Z" />
-      <path d="M12 16v4" />
-    </svg>
-  )
-}
 
 /** 快速上手指南：底部 3D 书本插图 + 星点装饰。 */
 function GuideArtIcon(): JSX.Element {
@@ -532,156 +603,709 @@ function GuidePanel({ t, onClose, left, top, height }: {
   )
 }
 
-/** MCP Server 菜单图标（三层机架）。 */
-function McpServerMenuIcon({ size = 15 }: { size?: number }): JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-      <rect x="4" y="4" width="16" height="5.5" rx="1.6" />
-      <rect x="4" y="13.5" width="16" height="5.5" rx="1.6" />
-      <path d="M7.2 6.8h.01M7.2 16.3h.01" strokeWidth="2.4" />
-    </svg>
-  )
-}
 
-/** MCP 配置模板菜单图标（滑杆）。 */
-function McpConfigIcon({ size = 15 }: { size?: number }): JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-      <path d="M5 8h14M5 16h14" />
-      <circle cx="9.5" cy="8" r="2" fill="var(--dsw-alias-bg-base,#fff)" />
-      <circle cx="15" cy="16" r="2" fill="var(--dsw-alias-bg-base,#fff)" />
-    </svg>
-  )
-}
 
-/** MCP 视图根：左侧竖排菜单（同技能左栏风格）+ 内容区。 */
-function McpView({ t, tab, onTab, onOpenInfo, servers, recommended, logs, onAdd, live, onAddCustom, onClearLogs, onRefresh, onLogged }: {
-  t: (key: string) => string
-  tab: 'server' | 'tools' | 'log' | 'config'
-  onTab: (value: 'server' | 'tools' | 'log' | 'config') => void
-  onOpenInfo: () => void
-  servers: McpServerRow[]
-  recommended: McpServerRow[]
-  logs: McpLogEntry[]
-  onAdd: (row: McpServerRow) => void
+/**
+ * MCP 顶栏：与技能页同构的预设 chips（全部 + 各预设，数字 = 该层可见 Server 数）
+ * + 启用状态分段。摆在主区之上，与技能页同一位置、同一套类名。
+ */
+function McpTopBar({ t, live, scope, onScope, status, onStatus }: {
+  t: (key: string, params?: Record<string, string | number>) => string
   live: LiveMcpStatus
-  onAddCustom: () => void
-  onClearLogs: () => void
-  onRefresh: () => void
-  /** 连接日志：真实 MCP 的移除等动作（localStorage 持久化）。 */
-  onLogged: (kind: McpLogEntry['kind'], name: string) => void
-}): JSX.Element {
-  // 导航计数与正文统一用 live 真实注册数；servers 是旧面板 localStorage 残留，不再作为计数源。
-  const navServerCount = live.state === 'ready' ? live.data.serverCount : 0;
-  void servers;
-  const items: Array<['server' | 'tools' | 'log' | 'config', string, JSX.Element]> = [
-    ['server', t('mcpServer'), <McpServerMenuIcon size={15} />],
-    ['tools', t('mcpTools'), <CapIcon kind="tool" size={15} />],
-    ['log', t('mcpLog'), <CapIcon kind="doc" size={15} />],
-    ['config', t('mcpConfig'), <McpConfigIcon size={15} />],
+  scope: string
+  onScope: (value: string) => void
+  status: 'all' | 'on' | 'off'
+  onStatus: (value: 'all' | 'on' | 'off') => void
+}): JSX.Element | null {
+  if (live.state !== 'ready') return null
+  const data = live.data
+  const presets = data.presets ?? []
+  if (presets.length === 0) return null
+  const globals = data.servers ?? []
+  const maskedOf = (presetId: string): Set<string> => new Set(
+    Object.entries(data.masks?.[presetId] ?? {}).filter(([, on]) => on === false).map(([name]) => name),
+  )
+  /** 该预设可见的 Server 数 = 未被它遮蔽的全局 + 它自带的行。 */
+  const visibleCount = (presetId: string): number => {
+    const masked = maskedOf(presetId)
+    return globals.filter(server => !masked.has(server.serverName)).length + (data.presetServers?.[presetId] ?? []).length
+  }
+  const chips: Array<{ id: string; label: string; count: number; overrides: number; icon: JSX.Element }> = [
+    { id: '', label: t('presetAll'), count: globals.length, overrides: 0, icon: <CatAllIcon size={16} /> },
+    ...presets.map(preset => ({
+      id: preset.id,
+      label: preset.name ?? preset.id,
+      count: visibleCount(preset.id),
+      overrides: maskedOf(preset.id).size,
+      icon: <IconAgentPresetOutline16 size={15} />,
+    })),
   ]
   return (
-    <div className={css.mcpViewRoot}>
-      {/* 左侧导航菜单 */}
-      <aside className={css.mcpSide}>
-        <div className={css.catTitle}>{t('mcpNavTitle')}</div>
-        <div className={css.catList} role="group" aria-label="MCP">
-          {items.map(([value, label, icon]) => (
-            <button
-              key={value}
-              type="button"
-              className={`${css.catItem} ${tab === value ? css.catItemActive : ''}`}
-              data-active={tab === value || undefined}
-              onClick={() => { onTab(value) }}
-            >
-              <span className={css.catIcon} data-active={tab === value || undefined}>{icon}</span>
-              <span className={css.catLabel}>{label}</span>
-              {value === 'server' && <span className={css.catCount}>{navServerCount}</span>}
-            </button>
-          ))}
-        </div>
-        {/* MCP 快速了解引导卡（左下角，点击打开右侧悬浮解释） */}
-        <section
-          className={css.mcpIntroCard}
-          role="button"
-          tabIndex={0}
-          onClick={onOpenInfo}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpenInfo() }
-          }}
-        >
-          <span className={css.mcpIntroTitle}>{t('mcpIntroTitle')}</span>
-          <span className={css.mcpIntroDesc}>{t('mcpIntroDesc')}</span>
+    <div className={css.topbar}>
+      <div className={css.chipRow} role="group" aria-label={t('mcpScopeTitle')}>
+        {chips.map(chip => (
           <button
+            key={chip.id === '' ? '__all__' : chip.id}
             type="button"
-            className={css.mcpIntroBtn}
-            onClick={(event) => { event.stopPropagation(); onOpenInfo() }}
+            className={`${css.catItem} ${scope === chip.id ? css.catItemActive : ''}`}
+            data-active={scope === chip.id || undefined}
+            onClick={() => { onScope(chip.id) }}
           >
-            {t('mcpIntroBtn')}
-            <ArrowRightIcon size={12} />
+            <span className={css.catIcon} data-active={scope === chip.id || undefined}>{chip.icon}</span>
+            <span className={css.catLabel}>{chip.label}</span>
+            <span
+              className={css.catCount}
+              data-warn={chip.overrides > 0 || undefined}
+              title={chip.id === ''
+                ? t('mcpScopeAllTip', { n: chip.count })
+                : t('mcpScopePresetTip', { n: chip.count })
+                  + (chip.overrides > 0 ? ` · ${t('mcpScopeOverrideCount', { n: chip.overrides })}` : '')}
+            >
+              {chip.count}
+            </span>
           </button>
-        </section>
-      </aside>
-      {/* 右侧内容区 */}
-      <div className={css.mcpMain}>
-        {tab === 'server' ? (
-          <McpServerView t={t} live={live} onAddCustom={onAddCustom} onOpenInfo={onOpenInfo} onRefresh={onRefresh} onLogged={onLogged} />
-        ) : tab === 'tools' ? (
-          <McpToolsView t={t} live={live} />
-        ) : tab === 'log' ? (
-          <McpLogsView t={t} logs={logs} onClear={onClearLogs} />
-        ) : tab === 'config' ? (
-          <McpConfigView t={t} />
-        ) : (
-          <div className={css.mcpEmpty} role="status">
-            <span className={css.mcpEmptyIcon} aria-hidden="true"><McpPlugIcon /></span>
-            <span className={css.mcpEmptyDesc}>{t('mcpComingDesc')}</span>
-          </div>
-        )}
+        ))}
+      </div>
+      <div className={css.statusSeg} role="group" aria-label={t('statusAll')}>
+        {([['all', t('statusAll')], ['on', t('statusOn')], ['off', t('statusOff')]] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={`${css.statusSegBtn} ${status === value ? css.statusSegActive : ''}`}
+            data-active={status === value || undefined}
+            aria-pressed={status === value}
+            onClick={() => { onStatus(value) }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
     </div>
   )
 }
 
-/** MCP Server 行数据模型（client 状态 + localStorage 持久化）。 */
-interface McpServerRow {
-  id: string
-  name: string
-  description: string
-  tag: 'official' | 'community'
-  category: string
-  enabled: boolean
-  /** 自启动：会话启动时是否自动拉起该 MCP 进程（关闭可省内存）。 */
-  autostart: boolean
-  /** 连接类型（自定义添加时生效）。 */
-  type?: 'stdio' | 'http' | 'sse'
-  /** stdio 启动命令（type=stdio）。 */
-  command?: string
-  /** http/sse 地址（type=http/sse）。 */
-  url?: string
-  /** 来源：推荐添加 / 自定义。 */
-  source: 'recommended' | 'custom'
+/**
+ * 工具 chips：卡片上列出该 MCP 提供的**全部**工具名，绿 = 启用、灰 = 禁用，
+ * 点击即切换（单个工具级 disabled，见 host 的 mcp-tool-disable）。
+ *
+ * 名单 = 注册工具 ∪ 账本禁用名：被禁用的工具在 agent 作用域里已被隐藏
+ * （restrict），但账本仍留着名字，所以还能点回来。
+ */
+/** 卡片要列出的工具全名：注册列表 ∪ 账本禁用名（被隐藏的也要能点回来）。 */
+function mcpToolNames(tools: LiveMcpTool[], disabledTools: string[]): string[] {
+  const known = new Set(tools.map(tool => tool.name))
+  return [...tools.map(tool => tool.name), ...disabledTools.filter(name => !known.has(name))]
 }
-/** 离线兜底推荐清单（host 拉取远程目录失败时使用；字段结构对齐远端条目）。 */
-const FALLBACK_RECOMMENDED: McpServerRow[] = [
-  { id: 'filesystem', name: 'Filesystem MCP', description: '提供安全的文件系统访问能力，支持读取、写入、搜索文件。', tag: 'official', category: '文件', enabled: false, autostart: false, source: 'recommended' },
-  { id: 'websearch', name: 'Web Search MCP', description: '集成网络搜索能力，获取实时信息和网页内容。', tag: 'official', category: '搜索', enabled: false, autostart: false, source: 'recommended' },
-  { id: 'github', name: 'GitHub MCP', description: '访问 GitHub 仓库、Issue、管理代码、Pull Request 等。', tag: 'official', category: '开发', enabled: false, autostart: false, source: 'recommended' },
-  { id: 'database', name: 'Database MCP', description: '连接并查询多种数据库，支持 SQL 执行和数据分析。', tag: 'community', category: '数据', enabled: false, autostart: false, source: 'recommended' },
-  { id: 'slack', name: 'Slack MCP', description: '与 Slack 工作区集成，发送消息、读取频道和管理通知。', tag: 'community', category: '协作', enabled: false, autostart: false, source: 'recommended' },
-]
-/** 用户已添加的自定义 MCP Server。 */
-const MCP_STORAGE_KEY = 'dsh.triad.mcpServers'
-/** 连接日志存储键。 */
-const MCP_LOG_KEY = 'dsh.triad.mcpLogs'
 
-/** 连接日志条目。 */
-interface McpLogEntry {
-  id: string
-  time: number
-  kind: 'add' | 'enable' | 'disable' | 'remove'
-  name: string
+function McpToolChips({ t, serverName, tools, disabledTools, locked, busy, onToggle }: {
+  t: (key: string, params?: Record<string, string | number>) => string
+  serverName: string
+  tools: LiveMcpTool[]
+  disabledTools: string[]
+  /** 预设范围下「全局层已禁用」的名字：预设层只能加禁，不能打开它们。 */
+  locked?: ReadonlySet<string>
+  busy: string | null
+  onToggle: (fullName: string, enabled: boolean) => void
+}): JSX.Element | null {
+  const prefix = `mcp__${serverName}__`
+  const names = mcpToolNames(tools, disabledTools)
+  if (names.length === 0) return null
+  const off = new Set(disabledTools)
+  return (
+    <div className={css.mcpToolChips} role="group" aria-label={t('mcpToolChipsAria', { name: serverName })}>
+      {names.map((name) => {
+        const disabled = off.has(name)
+        const isLocked = locked?.has(name) === true
+        const short = name.startsWith(prefix) ? name.slice(prefix.length) : name
+        const description = tools.find(tool => tool.name === name)?.description ?? ''
+        return (
+          <button
+            key={name}
+            type="button"
+            className={css.mcpToolChip}
+            data-on={disabled ? undefined : 'true'}
+            data-locked={isLocked || undefined}
+            data-busy={busy === name || undefined}
+            disabled={busy !== null || isLocked}
+            aria-pressed={!disabled}
+            title={isLocked
+              ? `${t('mcpToolGlobalOffTip')}\n${name}`
+              : `${disabled ? t('mcpToolClickEnable') : t('mcpToolClickDisable')}\n${name}${description === '' ? '' : `\n${description}`}`}
+            onClick={() => { onToggle(name, disabled) }}
+          >
+            {isLocked && <LockGlyph size={9} />}
+            {short}
+          </button>
+        )
+      })}
+    </div>
+  )
 }
+
+/**
+ * MCP 页（与技能页同构）：四张统计卡 + 当前编辑层提示行 + 工具条（搜索 / 刷新 /
+ * 添加）+ Server 列表。列表固定两块——「继承的全局 Server」（预设层开关 = 遮蔽）
+ * 与「该预设专属 Server」（写进该预设组合文件）；「全部 Agent」层只有前者，
+ * 开关直接启用/禁用全局条目。
+ */
+function McpPage({ t, live, scope, query, onQuery, status, onAddCustom, onRefresh, waitingTools, onWatchTools }: {
+  t: (key: string, params?: Record<string, string | number>) => string
+  live: LiveMcpStatus
+  scope: string
+  query: string
+  onQuery: (value: string) => void
+  status: 'all' | 'on' | 'off'
+  onAddCustom: () => void
+  onRefresh: () => void
+  /** 正在等待注册工具的 Server（面板在轮询，无需用户手动刷新）。 */
+  waitingTools: string[]
+  /** 让面板开始轮询这些 Server 的工具注册（启用后自动等）。 */
+  onWatchTools: (names: string[]) => void
+}): JSX.Element {
+  const [busy, setBusy] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [addOwnOpen, setAddOwnOpen] = useState(false)
+  /** 正在切换的工具全名（防连点）。 */
+  const [toolBusy, setToolBusy] = useState<string | null>(null)
+  /** 全局条目删除确认（null=关闭）。 */
+  const [removeReq, setRemoveReq] = useState<string | null>(null)
+  /** 预设专属行移除确认（null=关闭）。 */
+  const [removeOwnReq, setRemoveOwnReq] = useState<string | null>(null)
+
+  const ready = live.state === 'ready' ? live.data : null
+  const globals = ready?.servers ?? []
+  const presets = ready?.presets ?? []
+  const scoped = scope === '' ? undefined : presets.find(preset => preset.id === scope)
+  const masked = new Set(Object.entries(ready?.masks?.[scope] ?? {})
+    .filter(([, on]) => on === false).map(([name]) => name))
+  const ownRows = scope === '' ? [] : (ready?.presetServers?.[scope] ?? [])
+  const ownNames = new Set(ownRows.map(row => row.serverName))
+  /* 工具级禁用两层账本：有效禁用 = 全局层 ∪ 当前预设层（预设层只加禁，不打开）。
+   * 预设自带的卡只看预设层 —— 与继承来的全局 Server 彻底分离（不同名前缀也不会互相牵连）。 */
+  const globalOff = ready?.toolDisabled ?? {}
+  const presetTables = ready?.toolDisabledByPreset ?? {}
+  /**
+   * 某条「行」的有效禁用集合（同名也彻底独立）：
+   *   inherit（继承的全局行）= 全局层 ∪ inherit 条目；own（预设自带行）= 仅 own 条目。
+   * 两条行各记一份账，互不牵连 —— 撤掉其中一条时另一条的设置各自生效。
+   */
+  const offOf = (serverName: string, owner: 'own' | 'inherit'): string[] => {
+    const entry = presetTables[scope]?.[serverName]
+    if (owner === 'own') return entry?.own ?? []
+    if (scope === '') return globalOff[serverName] ?? []
+    return [...new Set([...(globalOff[serverName] ?? []), ...(entry?.inherit ?? [])])]
+  }
+  /** 全局层已禁用的名字：继承行无法在预设层打开它（与技能面板同模型）。 */
+  const lockedOf = (serverName: string): Set<string> => new Set(scope === '' ? [] : globalOff[serverName] ?? [])
+  /**
+   * 遮蔽诊断：账本里标了「已遮蔽」但运行期一个工具都没拒到（或安装报错）时
+   * 给出说明 —— 以前这种情况是静默的，面板看着「已遮蔽」但模型端工具照旧可见。
+   */
+  const maskInstall = ready?.maskInstall?.[scope]
+  const maskWarn: string | null = (() => {
+    if (scope === '' || masked.size === 0 || maskInstall === undefined) return null
+    if (maskInstall.errors.length > 0) return t('mcpMaskInstallFailed', { message: maskInstall.errors[0]! })
+    if (maskInstall.agents === 0) return t('mcpMaskNoAgent')
+    if (maskInstall.deniedAgents === 0) return t('mcpMaskNoDeny')
+    return null
+  })()
+
+  /** 统一写请求：成功刷新数据，失败收集错误文案。 */
+  const write = (token: string, url: string, payload: Record<string, unknown>): void => {
+    if (busy !== null) return
+    setBusy(token)
+    setError(null)
+    void fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
+        if (response.ok && body?.ok === true) { onRefresh(); return }
+        throw new Error(body?.error ?? String(response.status))
+      })
+      .catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : String(cause)) })
+      .finally(() => { setBusy(null) })
+  }
+  const toggleGlobal = (serverName: string, disabled: boolean): void => {
+    write(`toggle:${serverName}`, '/api/triad/mcp-config', { serverName, disabled })
+  }
+  const removeGlobal = (serverName: string): void => {
+    write(`remove:${serverName}`, '/api/triad/mcp-config', { serverName, action: 'remove' })
+  }
+  const setMasked = (serverName: string, enabled: boolean): void => {
+    if (busy !== null) return
+    setBusy(`mask:${serverName}`)
+    setError(null)
+    void fetch(`/api/triad/mcp-masks/${encodeURIComponent(scope)}/${encodeURIComponent(serverName)}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ enabled }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
+        if (response.ok && body?.ok === true) { onRefresh(); return }
+        throw new Error(body?.error ?? String(response.status))
+      })
+      .catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : String(cause)) })
+      .finally(() => { setBusy(null) })
+  }
+  /**
+   * 工具级启停（单条或多条一批）：`PUT /api/triad/mcp-tools/<server>`
+   * `{ enabled, tools, preset?, source? }`。范围决定写哪条「行」：
+   * 「全部 Agent」→ 全局行；某个预设 → 该预设层（`source` 指定哪条行）。
+   */
+  const putTools = (serverName: string, names: string[], enabled: boolean, source: 'own' | 'inherit'): void => {
+    if (names.length === 0 || toolBusy !== null || busy !== null) return
+    setToolBusy(names[0]!)
+    setError(null)
+    void fetch(`/api/triad/mcp-tools/${encodeURIComponent(serverName)}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify({ enabled, tools: names, ...(scope === '' ? {} : { preset: scope, source }) }),
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
+        if (response.ok && body?.ok === true) { onRefresh(); return }
+        throw new Error(body?.error ?? String(response.status))
+      })
+      .catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : String(cause)) })
+      .finally(() => { setToolBusy(null) })
+  }
+  const toggleTool = (serverName: string, fullName: string, enabled: boolean, source: 'own' | 'inherit'): void => {
+    putTools(serverName, [fullName], enabled, source)
+  }
+  const removeOwn = (serverName: string): void => {
+    if (busy !== null) return
+    setBusy(`own:${serverName}`)
+    setError(null)
+    void fetch(`/api/triad/mcp-presets/${encodeURIComponent(scope)}/servers/${encodeURIComponent(serverName)}`, {
+      method: 'DELETE', headers: { accept: 'application/json' },
+    })
+      .then(async (response) => {
+        const body = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
+        if (response.ok && body?.ok === true) { onRefresh(); return }
+        throw new Error(body?.error ?? String(response.status))
+      })
+      .catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : String(cause)) })
+      .finally(() => { setBusy(null) })
+  }
+  /** 一键清空该预设的遮蔽（顺序逐个取消，避免并发写账本互相覆盖）。 */
+  const clearMasks = (): void => {
+    if (busy !== null || masked.size === 0) return
+    setBusy('mask:__all__')
+    setError(null)
+    const names = [...masked]
+    void (async () => {
+      for (const serverName of names) {
+        const response = await fetch(`/api/triad/mcp-masks/${encodeURIComponent(scope)}/${encodeURIComponent(serverName)}`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({ enabled: true }),
+        })
+        const body = await response.json().catch(() => null) as { ok?: boolean; error?: string } | null
+        if (!(response.ok && body?.ok === true)) throw new Error(body?.error ?? String(response.status))
+      }
+      onRefresh()
+    })()
+      .catch((cause: unknown) => { setError(cause instanceof Error ? cause.message : String(cause)) })
+      .finally(() => { setBusy(null) })
+  }
+
+  /* 过滤：搜索命中 serverName 或工具名；状态档在全局层看启用状态、预设层看遮蔽。 */
+  const needle = query.trim().toLowerCase()
+  const shownGlobals = globals.filter(server => (needle === ''
+    || server.serverName.toLowerCase().includes(needle)
+    || server.tools.some(tool => tool.name.toLowerCase().includes(needle)))
+    && (status === 'all'
+      || (scope === '' ? (status === 'off' ? server.config.disabled : !server.config.disabled)
+        : (status === 'off' ? masked.has(server.serverName) : !masked.has(server.serverName)))))
+  const shownOwn = ownRows.filter(row => needle === ''
+    || row.serverName.toLowerCase().includes(needle)
+    || row.summary.toLowerCase().includes(needle))
+
+  const ownTotal = Object.values(ready?.presetServers ?? {}).reduce((sum, rows) => sum + rows.length, 0)
+  const disabledCount = globals.filter(server => server.config.disabled).length
+  const statCards: Array<{ tone: string; icon: JSX.Element; label: string; value: string | number; desc: string; warn?: boolean }> = [
+    { tone: 'blue', icon: <StatCubeIcon size={20} />, label: t('mcpStatManaged'), value: globals.length + ownRows.length, desc: t('mcpStatManagedDesc') },
+    { tone: 'green', icon: <StatCheckCircleIcon size={20} />, label: t('mcpStatGlobal'), value: globals.length, desc: t('mcpStatGlobalDesc') },
+    { tone: 'violet', icon: <StatSquareIcon size={20} />, label: t('mcpStatOwn'), value: ownTotal, desc: t('mcpStatOwnDesc') },
+    {
+      tone: 'orange',
+      icon: <StatHeartIcon size={20} />,
+      label: t('mcpStatHealth'),
+      value: disabledCount === 0 ? t('mcpHealthOk') : t('mcpHealthWarn', { n: disabledCount }),
+      desc: t('mcpStatHealthDesc'),
+      warn: disabledCount > 0,
+    },
+  ]
+
+  return (
+    <div className={css.mcpServerMain}>
+      {/* 统计行（与技能页同构的四张卡） */}
+      <div className={css.statsRow} data-mcp="true">
+        {statCards.map(card => (
+          <div key={card.label} className={css.stat}>
+            <span className={css.statIconCol}>
+              <span className={css.statIcon} data-tone={card.tone}>{card.icon}</span>
+              <i className={css.statGlow} data-tone={card.tone} aria-hidden="true" />
+            </span>
+            <span className={css.statBody}>
+              <span className={css.statLabel}>{card.label}</span>
+              <span className={css.statValueRow}>
+                <span className={css.statValue} data-tone={card.warn === true ? 'warn' : undefined}>{card.value}</span>
+              </span>
+              <span className={css.statDesc}>{card.desc}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* 当前编辑层提示行（与技能页 hintRow 同构） */}
+      <div className={css.hintRow}>
+        <span className={css.hintRowText}>
+          {scope === ''
+            ? t('mcpScopeHintAll')
+            : t('mcpScopeHintScoped', { name: scoped?.name ?? scope })}
+        </span>
+        {scope !== '' && masked.size > 0 && (
+          <button type="button" className={css.presetReset} disabled={busy !== null} onClick={clearMasks}>
+            {t('presetReset')}
+          </button>
+        )}
+      </div>
+
+      {/* 工具条：搜索 / 刷新 / 添加 */}
+      <div className={css.toolbar}>
+        <div className={css.searchBox}>
+          <SearchIcon />
+          <input
+            className={css.searchInput}
+            value={query}
+            placeholder={t('mcpSearchServers')}
+            aria-label={t('mcpSearchServers')}
+            onChange={(event) => { onQuery(event.currentTarget.value) }}
+          />
+        </div>
+        <span className={css.toolbarSpacer} />
+        <button
+          type="button"
+          className={css.toolButton}
+          style={{ height: 34, alignSelf: 'center' }}
+          onClick={onRefresh}
+        >
+          {t('mcpLiveRefresh')}
+        </button>
+        {scope !== '' && (
+          <button
+            type="button"
+            className={css.newBundleBtn}
+            style={{ width: 'auto', marginTop: 0, height: 34, fontSize: 12 }}
+            onClick={() => { setAddOwnOpen(true) }}
+          >
+            <IconPlusOutline16 size={14} aria-hidden="true" />
+            {t('mcpPresetAddOwn')}
+          </button>
+        )}
+        <button
+          type="button"
+          className={css.addBtn}
+          style={{ height: 34, alignSelf: 'center' }}
+          aria-label={t('mcpAddServer')}
+          title={scope === '' ? undefined : t('mcpAddGlobalHint')}
+          onClick={onAddCustom}
+        >
+          <IconPlusOutline16 size={15} aria-hidden="true" />
+          {/* 预设范围下写明这一条是全局的：只想给当前预设用请走左侧的「添加专属 Server」。 */}
+          {scope === '' ? t('mcpAddServer') : t('mcpAddServerGlobal')}
+        </button>
+      </div>
+
+      {error !== null && <p className={css.error} role="alert">{t('mcpPresetFailed', { message: error })}</p>}
+
+      {/* 遮蔽诊断：账本写了但运行期没拒到工具/安装报错时，明确说出来 */}
+      {maskWarn !== null && <p className={css.error} role="alert">{maskWarn}</p>}
+
+      {/* 添加/启用后的自动等待：面板在轮询，用户不用再手动点「刷新」 */}
+      {waitingTools.length > 0 && (
+        <p className={css.mcpEmptyList} role="status">{t('mcpWaitingTools', { names: waitingTools.join('、') })}</p>
+      )}
+
+      {live.state === 'unavailable' ? (
+        <p className={css.mcpEmptyList}>{t('mcpLiveUnavailable')}</p>
+      ) : (
+        <>
+          {/* ① 继承的全局 Server（预设层开关 = 遮蔽） */}
+          <section className={css.mcpListCard}>
+            <div className={css.mcpListHead}>
+              <span className={css.mcpListTitle}>{scope === '' ? t('mcpListTitle') : t('mcpPresetGlobalSection')}</span>
+              <span className={css.mcpListCount}>{shownGlobals.length}</span>
+            </div>
+            {scope !== '' && <p className={css.mcpEmptyList}>{t('mcpPresetMaskHint')}</p>}
+            {shownGlobals.length === 0 ? (
+              <p className={css.mcpEmptyList}>{globals.length === 0 ? t('mcpLiveEmpty') : t('mcpListFilteredEmpty')}</p>
+            ) : (
+              <div className={css.mcpRecGrid}>
+                {shownGlobals.map((server) => {
+                  const isMasked = masked.has(server.serverName)
+                  const covered = ownNames.has(server.serverName)
+                  const offTools = offOf(server.serverName, 'inherit')
+                  const lockedTools = lockedOf(server.serverName)
+                  const listed = server.tools.length
+                  const pendingReg = isToolRegistrationPending(server.toolCount, listed)
+                  /** 被「全部 Agent」层一票否决的工具数（预设视图里才可能 > 0）。 */
+                  const lockedCount = mcpToolNames(server.tools, offTools).filter(name => lockedTools.has(name)).length
+                  return (
+                    <section key={`global-${server.serverName}`} className={css.mcpRecCard}>
+                      <div className={css.mcpRecCardHead}>
+                        <span className={css.mcpRecCardTitleRow}>
+                          <span className={css.mcpRecCardName}>{server.serverName}</span>
+                          <span className={css.mcpRecCardTags}>
+                            {/* 数量跟随卡片实际列出的工具：进程还在连时先按名单缓存显示，并标出「等待注册」 */}
+                            <span className={css.mcpRecCatTag}>
+                              {server.toolCount > 0 ? server.toolCount : listed} {t('mcpLiveToolsOf')}
+                            </span>
+                            {pendingReg && (
+                              <span className={css.mcpRecCatTag} data-off="true" title={t('mcpToolsPendingRegTip')}>
+                                {t('mcpToolsPendingReg')}
+                              </span>
+                            )}
+                            {/* 全局一票否决：预设层这些工具被强制置灰、不可拨动 */}
+                            {lockedCount > 0 && (
+                              <span className={css.mcpRecCatTag} data-locked="true" title={t('mcpToolGlobalOffTip')}>
+                                {t('mcpToolGlobalOff')}{lockedCount > 1 ? ` ${lockedCount}` : ''}
+                              </span>
+                            )}
+                            {offTools.length > 0 && (
+                              <span className={css.mcpRecCatTag} data-off="true">{t('mcpToolDisabledCount', { n: offTools.length })}</span>
+                            )}
+                            {scope === ''
+                              ? (server.config.disabled ? <span className={css.mcpRecCatTag}>{t('mcpLiveDisabled')}</span> : null)
+                              : (isMasked ? <span className={css.mcpRecCatTag}>{t('mcpPresetMasked')}</span> : null)}
+                          </span>
+                        </span>
+                        <Tooltip
+                          label={scope === ''
+                            ? (server.config.disabled ? t('enableSkill') : t('mcpLiveDisabled'))
+                            : covered
+                              ? t('mcpPresetCoveredSwitchHint')
+                              : isMasked ? t('enableSkill') : t('mcpPresetMasked')}
+                          side="bottom"
+                          delayMs={500}
+                        >
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={scope === '' ? !server.config.disabled : !isMasked}
+                            aria-label={scope === '' ? t('mcpLiveDisabled') : t('mcpPresetMasked')}
+                            className={`${css.toggle} ${(scope === '' ? server.config.disabled : isMasked) ? css.toggleOff : css.toggleOn}`}
+                            /* 预设层：即使该预设自带同名 Server，也允许遮蔽全局这一条 ——
+                             * 遮蔽是「本预设不要全局那份」的持久表达，等自带的被移除后即刻生效。 */
+                            disabled={busy !== null || (scope === '' && !server.config.editable)}
+                            onClick={() => {
+                              if (scope === '') {
+                                const nextDisabled = !server.config.disabled
+                                toggleGlobal(server.serverName, nextDisabled)
+                                // 启用 = 重新拉起进程并注册工具：开始轮询，别让用户等 / 手点刷新。
+                                if (!nextDisabled) onWatchTools([server.serverName])
+                              } else setMasked(server.serverName, isMasked)
+                            }}
+                          >
+                            <span className={css.toggleKnob} aria-hidden="true" />
+                          </button>
+                        </Tooltip>
+                      </div>
+                      <p className={css.mcpRecCardDesc}>
+                        {server.config.disabled && scope === '' && server.tools.length === 0
+                          ? `${t('mcpLiveDisabled')} · ${t('mcpToolsUnavailable')}`
+                          : t('mcpToolsHint')}
+                      </p>
+                      <McpToolChips
+                        t={t}
+                        serverName={server.serverName}
+                        tools={server.tools}
+                        disabledTools={offTools}
+                        locked={lockedTools}
+                        busy={toolBusy}
+                        onToggle={(fullName, enabled) => { toggleTool(server.serverName, fullName, enabled, 'inherit') }}
+                      />
+                      <div className={css.mcpCardFoot}>
+                        <span className={css.mcpCardItem}>
+                          <span className={css.mcpCardItemLabel}>
+                            {scope === '' ? t('mcpLiveConfigHint')
+                              : covered
+                                ? (isMasked ? t('mcpPresetCoveredMasked') : t('mcpPresetCovered'))
+                                : isMasked ? t('mcpPresetMasked') : t('mcpPresetMaskState')}
+                          </span>
+                        </span>
+                        {scope === '' && server.config.editable ? (
+                          <button
+                            type="button"
+                            className={css.mcpCardDelete}
+                            title={t('mcpRemove')}
+                            disabled={busy !== null}
+                            onClick={() => { setRemoveReq(server.serverName) }}
+                          >
+                            <IconTrashOutline16 size={13} aria-hidden="true" />{t('mcpRemove')}
+                          </button>
+                        ) : null}
+                      </div>
+                    </section>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
+          {/* ② 该预设专属 Server（写进该预设组合文件） */}
+          {scope !== '' && (
+            <section className={css.mcpListCard} style={{ marginTop: 12 }}>
+              <div className={css.mcpListHead}>
+                <span className={css.mcpListTitle}>{t('mcpPresetOwnSection')}</span>
+                <span className={css.mcpListCount}>{shownOwn.length}</span>
+              </div>
+              <p className={css.mcpEmptyList}>{t('mcpPresetOwnHint')}</p>
+              {scoped?.trust === 'system' && <p className={css.mcpEmptyList}>{t('mcpPresetStorageHint')}</p>}
+              {shownOwn.length === 0 ? (
+                <p className={css.mcpEmptyList}>{ownRows.length === 0 ? t('mcpPresetOwnEmpty') : t('mcpListFilteredEmpty')}</p>
+              ) : (
+                <div className={css.mcpRecGrid}>
+                  {shownOwn.map(row => {
+                    /* 预设自带的这条行只认 own 条目：全局行/继承行的设置与它互不影响。 */
+                    const offOwn = offOf(row.serverName, 'own')
+                    /** 一键全禁/全开：一次请求带上该行的全部工具名。 */
+                    const ownToolNames = (row.tools ?? []).map(tool => tool.name)
+                    const allDisabled = ownToolNames.length > 0 && ownToolNames.every(name => offOwn.includes(name))
+                    return (
+                    <section key={`own-${row.serverName}`} className={css.mcpRecCard}>
+                      <div className={css.mcpRecCardHead}>
+                        <span className={css.mcpRecCardTitleRow}>
+                          <span className={css.mcpRecCardName}>{row.serverName}</span>
+                          <span className={css.mcpRecCardTags}>
+                            <span className={css.mcpRecCatTag}>{row.transport}</span>
+                            <span className={css.mcpRecCatTag}>
+                              {(row.registeredCount ?? 0) > 0 ? row.registeredCount : (row.tools?.length ?? 0)} {t('mcpLiveToolsOf')}
+                            </span>
+                            {isToolRegistrationPending(row.registeredCount ?? 0, row.tools?.length ?? 0) && (
+                              <span className={css.mcpRecCatTag} data-off="true" title={t('mcpToolsPendingRegTip')}>
+                                {t('mcpToolsPendingReg')}
+                              </span>
+                            )}
+                            {globals.some(item => item.serverName === row.serverName) && (
+                              <span className={css.mcpRecCatTag} data-shadow="true" title={t('mcpPresetShadowGlobalTip')}>
+                                {t('mcpPresetShadowGlobalTag')}
+                              </span>
+                            )}
+                            {offOwn.length > 0 && (
+                              <span className={css.mcpRecCatTag} data-off="true">{t('mcpToolDisabledCount', { n: offOwn.length })}</span>
+                            )}
+                          </span>
+                        </span>
+                        {/* 一键全禁/全开：预设自带这台的「快速禁用全部工具」滑块 */}
+                        <Tooltip
+                          label={ownToolNames.length === 0
+                            ? t('mcpToolsPendingRegTip')
+                            : allDisabled
+                              ? t('mcpToolAllEnable')
+                              : offOwn.length > 0
+                                ? `${t('mcpToolAllPartial')} · ${t('mcpToolAllDisable')}`
+                                : t('mcpToolAllDisable')}
+                          side="bottom"
+                          delayMs={400}
+                        >
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={!allDisabled}
+                            aria-label={t('mcpToolAllAria', { name: row.serverName })}
+                            className={`${css.toggle} ${allDisabled ? css.toggleOff : css.toggleOn}`}
+                            disabled={busy !== null || toolBusy !== null || ownToolNames.length === 0}
+                            onClick={() => { putTools(row.serverName, ownToolNames, allDisabled, 'own') }}
+                          >
+                            <span className={css.toggleKnob} aria-hidden="true" />
+                          </button>
+                        </Tooltip>
+                      </div>
+                      <p className={css.mcpRecCardDesc}>{row.summary}</p>
+                      <McpToolChips
+                        t={t}
+                        serverName={row.serverName}
+                        tools={row.tools ?? []}
+                        disabledTools={offOwn}
+                        busy={toolBusy}
+                        onToggle={(fullName, enabled) => { toggleTool(row.serverName, fullName, enabled, 'own') }}
+                      />
+                      <div className={css.mcpCardFoot}>
+                        <span className={css.mcpCardItem}>
+                          <span className={css.mcpCardItemLabel}>{t('mcpPresetNewSession')}</span>
+                        </span>
+                        <button
+                          type="button"
+                          className={css.mcpCardDelete}
+                          disabled={busy !== null}
+                          onClick={() => { setRemoveOwnReq(row.serverName) }}
+                        >
+                          <IconTrashOutline16 size={13} aria-hidden="true" />{t('mcpRemove')}
+                        </button>
+                      </div>
+                    </section>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+        </>
+      )}
+
+      {/* 预设专属添加：粘贴 JSON / DSH 原生 YAML */}
+      <Modal
+        open={addOwnOpen}
+        onClose={() => { setAddOwnOpen(false) }}
+        closeLabel={t('close')}
+        title={`${t('mcpPresetAddOwn')} · ${scoped?.name ?? scope}`}
+      >
+        <McpPasteAdd
+          t={t}
+          presetId={scope}
+          onAdded={(added) => { onRefresh(); onWatchTools(added) }}
+          onCancel={() => { setAddOwnOpen(false) }}
+        />
+      </Modal>
+
+      {/* 全局条目删除确认 */}
+      {removeReq !== null && (
+        <ConfirmDialog
+          open
+          title={t('mcpRemoveConfirmTitle')}
+          message={t('mcpRemoveConfirmMsg', { name: removeReq })}
+          confirmLabel={t('mcpRemove')}
+          cancelLabel={t('cancel')}
+          danger
+          onConfirm={() => { const name = removeReq; setRemoveReq(null); removeGlobal(name) }}
+          onClose={() => { setRemoveReq(null) }}
+        />
+      )}
+
+      {/* 预设专属行移除确认（同名全局条目不受影响） */}
+      {removeOwnReq !== null && (
+        <ConfirmDialog
+          open
+          title={t('mcpOwnRemoveConfirmTitle')}
+          message={t('mcpOwnRemoveConfirmMsg', { name: removeOwnReq })}
+          confirmLabel={t('mcpRemove')}
+          cancelLabel={t('cancel')}
+          danger
+          onConfirm={() => { const name = removeOwnReq; setRemoveOwnReq(null); removeOwn(name) }}
+          onClose={() => { setRemoveOwnReq(null) }}
+        />
+      )}
+    </div>
+  )
+}
+
+
 
 /** 真实 MCP 状态（host /api/triad/mcp-status：ctx.tools 中 mcp__* 工具分组）。 */
 interface LiveMcpTool {
@@ -694,17 +1318,69 @@ interface LiveMcpServer {
   tools: LiveMcpTool[]
   /** 配置文件条目信息（启用/禁用开关用）。 */
   config: { entryId: string | null; disabled: boolean; editable: boolean }
+  /** 0.1.6：作用域（当前恒为 global）。 */
+  scope?: string
+  /** 0.1.6：哪些 Agent 预设遮蔽了它（账本镜像）。 */
+  maskedBy?: string[]
+}
+/** 预设自带的 mcp-client 行（host 从预设组合文本解析）。 */
+interface PresetMcpRowWire {
+  entryId: string
+  serverName: string
+  transport: string
+  summary: string
+  /** 该 server 的工具（活动 agent 作用域 ∪ 名单缓存；无数据时缺省）。 */
+  tools?: LiveMcpTool[]
 }
 interface LiveMcpState {
   at: string
   serverCount: number
   toolCount: number
   servers: LiveMcpServer[]
+  /** 0.1.6：Agent 预设名单。 */
+  presets?: PresetRow[]
+  /** 0.1.6：presetId → { serverName: false }（显式遮蔽；缺省 = 继承全局）。 */
+  masks?: Record<string, Record<string, boolean>>
+  /** 0.1.6：presetId → 该预设自带的 mcp-client 行。 */
+  presetServers?: Record<string, PresetMcpRowWire[]>
+  /** 工具级禁用·全局层镜像：serverName → 禁用工具全名（所有预设生效）。 */
+  toolDisabled?: Record<string, string[]>
+  /** 工具级禁用·预设层镜像（按「行」分账）：presetId → serverName → { own, inherit }。 */
+  toolDisabledByPreset?: Record<string, Record<string, { own: string[]; inherit: string[] }>>
+  /** 遮蔽补丁运行期安装诊断：presetId → 活动 agent 数与 deny 数、失败原因。 */
+  maskInstall?: Record<string, { agents: number; deniedAgents: number; denyTotal: number; errors: string[] }>
 }
 type LiveMcpStatus =
   | { state: 'loading'; data: null }
   | { state: 'ready'; data: LiveMcpState }
   | { state: 'unavailable'; data: null }
+
+/** 添加/启用后自动等工具注册的轮询间隔与总时长。 */
+const MCP_TOOL_WATCH_INTERVAL_MS = 2000
+// npx 首次拉包可能要一两分钟，等待窗口给足；期间卡片显示「等待注册」，超时后
+// 用户仍可手动刷新（下一次添加/启用会重新开始等待）。
+const MCP_TOOL_WATCH_TIMEOUT_MS = 150_000
+
+/**
+ * 状态里某 Server **实际注册**的工具数（全局条目 ∪ 各预设自带行，取最大）。
+ *
+ * 一定要用注册数（`toolCount` / `registeredCount`），不能用卡片上那份
+ * 「注册 ∪ 名单缓存」的列表长度 —— 缓存会让还没连上的 Server 看起来已就绪，
+ * 自动等待就会提前收工（表现就是卡在「0 工具」还得手动刷新）。
+ */
+function mcpRegisteredToolCountOf(data: LiveMcpState, serverName: string): number {
+  let count = data.servers.find(server => server.serverName === serverName)?.toolCount ?? 0
+  for (const rows of Object.values(data.presetServers ?? {})) {
+    const row = rows.find(item => item.serverName === serverName)
+    if (row !== undefined) count = Math.max(count, row.registeredCount ?? 0)
+  }
+  return count
+}
+
+/** 该 Server 是否还没注册出工具（卡片给「等待注册」标记用）。 */
+function isToolRegistrationPending(registered: number, listed: number): boolean {
+  return registered === 0 && listed > 0
+}
 
 /** 拉取真实 MCP 注册状态；失败（服务端未重启等）→ unavailable（界面引导重启）。 */
 function useMcpLiveState(): [LiveMcpStatus, () => void] {
@@ -724,898 +1400,177 @@ function useMcpLiveState(): [LiveMcpStatus, () => void] {
   return [status, load]
 }
 
-/** 生成 cordis.patch.yml 配置片段（复制用；不写任何存储）。 */
-function mcpConfigureSnippet(name: string, type: 'stdio' | 'http' | 'sse', command: string, url: string): string {
-  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'mcp-server'
-  if (type === 'http' || type === 'sse') {
-    return `# ${name}\n- insert:\n    - id: mcp-${slug}\n      name: '@deepseek-ai/dsh-mcp-client'\n      config:\n        serverName: ${slug}\n        transport: streamable-http\n        url: ${JSON.stringify(url)}\n        failOnStartupError: false\n`
-  }
-  return `# ${name}\n- insert:\n    - id: mcp-${slug}\n      name: '@deepseek-ai/dsh-mcp-client'\n      config:\n        serverName: ${slug}\n        transport: stdio\n        command: ${JSON.stringify(command)}\n        cwd: !!js process.cwd()\n        failOnStartupError: false\n`
-}
 
-function loadStoredLogs(): McpLogEntry[] {
-  try {
-    const raw = localStorage.getItem(MCP_LOG_KEY)
-    if (raw === null) return []
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return (parsed as McpLogEntry[]).filter((row) => typeof row === 'object' && row !== null && typeof row.time === 'number')
-  } catch {
-    return []
-  }
-}
-
-function saveStoredLogs(rows: McpLogEntry[]): void {
-  try {
-    localStorage.setItem(MCP_LOG_KEY, JSON.stringify(rows))
-  } catch {
-    /* 存储不可用时静默。 */
-  }
-}
-
-function loadStoredMcps(): McpServerRow[] {
-  try {
-    const raw = localStorage.getItem(MCP_STORAGE_KEY)
-    if (raw === null) return []
-    const parsed = JSON.parse(raw) as unknown
-    if (!Array.isArray(parsed)) return []
-    return (parsed as McpServerRow[]).filter((row) => typeof row === 'object' && row !== null && typeof row.name === 'string')
-      .map((row) => ({ ...row, autostart: row.autostart !== false }))
-  } catch {
-    return []
-  }
-}
-
-function saveStoredMcps(rows: McpServerRow[]): void {
-  try {
-    localStorage.setItem(MCP_STORAGE_KEY, JSON.stringify(rows))
-  } catch {
-    /* 存储不可用（隐私模式等）时静默：状态仍在内存中生效。 */
-  }
-}
-
-/** 推荐 MCP Server 页：蓝色标题 + 推荐列表（「添加」= 复制配置片段，不写本地）。 */
-function McpRecommendView({ t, recommended, live, onAdd }: {
-  t: (key: string) => string
-  recommended: McpServerRow[]
-  live: LiveMcpStatus
-  onAdd: (row: McpServerRow) => void
+/**
+ * 粘贴添加 MCP：JSON（其它 harness 的 `.mcp.json` 形态）或 DSH 原生 YAML，
+ * 先「校验并预览」（宿主解析，带行号报错），确认后写入目标（全局 patch / 预设）。
+ * 一次粘贴可含多个 server；已存在的 serverName 自动跳过。
+ */
+function McpPasteAdd({ t, presetId, onAdded, onCancel }: {
+  t: (key: string, params?: Record<string, string | number>) => string
+  /** 目标预设；undefined = 全局 profile patch。 */
+  presetId?: string
+  /** 添加成功回调：带上本次新增的 serverName（面板据此自动等工具注册）。 */
+  onAdded: (added: string[]) => void
+  onCancel: () => void
 }): JSX.Element {
-  const [recCat, setRecCat] = useState<'all' | 'official' | 'community'>('all')
-  const [openRecMenu, setOpenRecMenu] = useState<string | null>(null)
-  const [q, setQ] = useState('')
-  const [searching, setSearching] = useState(false)
-  const [external, setExternal] = useState<Array<{ id: string; name: string; description: string; url?: string; stars?: number; source: 'github' | 'registry' }>>([])
-  /** 一键添加：解析 README 中的解析中/失败标记。 */
-  const [resolvingId, setResolvingId] = useState<string | null>(null)
-  const [resolveErr, setResolveErr] = useState<string | null>(null)
-  /** 已复制配置片段的行 id（短暂展示「已复制 ✓」）。 */
-  const [copiedId, setCopiedId] = useState<string | null>(null)
-  /** 复制 cordis.patch.yml 配置片段（不写任何存储；真实添加需粘贴到配置文件）。 */
-  const copyRow = (row: McpServerRow): void => {
-    const snippet = mcpConfigureSnippet(
-      row.name,
-      row.url !== undefined
-        ? (row.url.toLowerCase().includes('/sse') ? 'sse' : 'http')
-        : row.type === 'stdio' ? 'stdio' : 'http',
-      row.command ?? '',
-      row.url ?? '',
-    )
-    void navigator.clipboard.writeText(snippet).then(() => {
-      setCopiedId(row.id)
-      window.setTimeout(() => { setCopiedId((current) => (current === row.id ? null : current)) }, 1600)
-    }, () => { /* 剪贴板不可用时静默 */ })
-  }
-  /** 外部搜索结果 → 可添加行（id 保持与卡片一致）。 */
-  const externalToRow = (item: { id: string; name: string; description: string; url?: string; source: 'github' | 'registry' }): McpServerRow => ({
-    id: item.id,
-    name: item.name,
-    description: item.description,
-    tag: 'community',
-    category: '精选',
-    enabled: true,
-    autostart: true,
-    source: 'recommended',
-  })
-  /** GitHub 条目：请求 host 解析 README 安装方式后一键添加。 */
-  const resolveAndAdd = async (item: { id: string; name: string; description: string; url?: string }): Promise<void> => {
-    if (resolvingId !== null || typeof item.url !== 'string') return
-    setResolvingId(item.id)
-    setResolveErr(null)
-    try {
-      const res = await fetch(`/api/mcp-recommended/resolve?repo=${encodeURIComponent(item.url)}`, { headers: { accept: 'application/json' } })
-      const body = await res.json() as { ok?: boolean; type?: 'stdio' | 'http' | 'sse'; command?: string; url?: string }
-      if (!body.ok || body.type === undefined) {
-        setResolveErr(item.id)
-        return
-      }
-      copyRow({
-        ...externalToRow(item),
-        type: body.type,
-        ...(body.type === 'stdio' ? { command: body.command ?? '' } : { url: body.url ?? item.url }),
-      })
-    } catch {
-      setResolveErr(item.id)
-    } finally {
-      setResolvingId(null)
-    }
-  }
-  const liveNames = live.state === 'ready' ? live.data.servers.map((server) => server.serverName) : []
-  const addedIds = new Set(liveNames)
-  const alreadyLive = (id: string): boolean => liveNames.some((name) => name === id || name.includes(id) || id.includes(name))
-  const cats: Array<['all' | 'official' | 'community', string]> = [
-    ['all', t('filterAll')], ['official', t('mcpTagOfficial')], ['community', t('mcpTagCommunity')],
-  ]
-  const ql = q.trim().toLowerCase()
-  const filtered = recommended.filter((row) =>
-    (recCat === 'all' || row.tag === recCat)
-    && (ql === '' || row.name.toLowerCase().includes(ql) || (row.description ?? '').toLowerCase().includes(ql)))
+  const [format, setFormat] = useState<'json' | 'yaml'>('json')
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState<'preview' | 'add' | null>(null)
+  const [preview, setPreview] = useState<{ names: string[]; yaml: string } | null>(null)
+  const [errors, setErrors] = useState<string[]>([])
+  const [warnings, setWarnings] = useState<string[]>([])
+  const [notice, setNotice] = useState<string | null>(null)
+  const target = presetId === undefined ? 'global' : 'preset'
+  const placeholder = format === 'json'
+    ? '{ "mcpServers": { "my-server": { "command": "npx", "args": ["-y", "@scope/mcp-server"] } } }'
+    : 'mcpServers:\n  my-server:\n    command: npx\n    args: ["-y", "@scope/mcp-server"]'
+  const empty = text.trim() === ''
 
-  /** 联网搜索：输入 ≥2 字后防抖 450ms 调 /api/mcp-recommended/search。 */
-  useEffect(() => {
-    const keyword = q.trim()
-    if (keyword.length < 2) { setExternal([]); setSearching(false); return undefined }
-    setSearching(true)
-    const timer = window.setTimeout(() => {
-      let current = true
-      void fetch(`/api/mcp-recommended/search?q=${encodeURIComponent(keyword)}`, { headers: { accept: 'application/json' } })
-        .then((response) => response.json().catch(() => null))
-        .then((body) => {
-          if (!current) return
-          const list = Array.isArray((body as { servers?: unknown } | null)?.servers) ? (body as { servers: Array<{ id?: unknown; name?: unknown; description?: unknown; url?: unknown; stars?: unknown; source?: unknown }> }).servers : []
-          setExternal(list
-            .filter((item) => typeof item === 'object' && item !== null && typeof item.name === 'string' && item.name !== '')
-            .map((item) => ({
-              id: typeof item.id === 'string' ? item.id : `ext-${item.name as string}`,
-              name: item.name as string,
-              description: typeof item.description === 'string' ? item.description : '',
-              url: typeof item.url === 'string' ? item.url : undefined,
-              stars: typeof item.stars === 'number' ? item.stars : undefined,
-              source: item.source === 'registry' ? 'registry' : 'github',
-            })))
-        }, () => { /* 搜索接口不可用：保持空结果 */ })
-        .finally(() => { if (current) setSearching(false) })
-      return () => { current = false }
-    }, 450)
-    return () => { window.clearTimeout(timer) }
-  }, [q])
+  const call = (path: string, payload: Record<string, unknown>): Promise<Record<string, unknown>> =>
+    fetch(path, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
+      body: JSON.stringify(payload),
+    }).then(async (response) => {
+      const body = await response.json().catch(() => null) as Record<string, unknown> | null
+      return body ?? { ok: false, error: `HTTP ${response.status}` }
+    })
+
+  const reset = (): void => { setErrors([]); setWarnings([]); setNotice(null); setPreview(null) }
+
+  const previewNow = (): void => {
+    if (busy !== null || empty) return
+    setBusy('preview'); reset()
+    void call('/api/triad/mcp-preview', { format, text, target })
+      .then((body) => {
+        const list = Array.isArray(body.errors) ? (body.errors as string[]) : []
+        setErrors(list)
+        if (Array.isArray(body.warnings)) setWarnings(body.warnings as string[])
+        if (typeof body.yaml === 'string') {
+          const servers = Array.isArray(body.servers) ? (body.servers as Array<{ name?: unknown }>) : []
+          setPreview({ names: servers.map(item => String(item.name ?? '')), yaml: body.yaml })
+        }
+        if (list.length === 0 && typeof body.error === 'string') setErrors([body.error])
+      })
+      .catch((error: unknown) => { setErrors([error instanceof Error ? error.message : String(error)]) })
+      .finally(() => { setBusy(null) })
+  }
+
+  const addNow = (): void => {
+    if (busy !== null || empty) return
+    setBusy('add'); reset()
+    const path = presetId === undefined
+      ? '/api/triad/mcp-config'
+      : `/api/triad/mcp-presets/${encodeURIComponent(presetId)}/servers`
+    const payload = presetId === undefined ? { action: 'add', format, text } : { format, text }
+    void call(path, payload)
+      .then((body) => {
+        const list = Array.isArray(body.errors) ? (body.errors as string[]) : []
+        if (list.length > 0) {
+          setErrors(list)
+          if (Array.isArray(body.warnings)) setWarnings(body.warnings as string[])
+          return
+        }
+        if (body.ok !== true) { setErrors([String(body.error ?? t('mcpPasteFailed'))]); return }
+        const added = Array.isArray(body.added) ? (body.added as string[]) : []
+        const skipped = Array.isArray(body.skipped) ? (body.skipped as number | string[]) : []
+        setNotice(t('mcpPasteAdded', { added: added.length, skipped: Array.isArray(skipped) ? skipped.length : Number(skipped) }))
+        if (Array.isArray(body.warnings)) setWarnings(body.warnings as string[])
+        onAdded(added)
+      })
+      .catch((error: unknown) => { setErrors([error instanceof Error ? error.message : String(error)]) })
+      .finally(() => { setBusy(null) })
+  }
+
   return (
-    <div className={css.mcpServerMain}>
-      <div className={css.mcpRecHead}>
-        <span className={css.mcpRecommendTitle}>{t('mcpRecommendTitle')}</span>
-        <div className={css.mcpToolSearch}>
-          <SearchIcon />
-          <input className={css.mcpToolSearchInput} value={q} placeholder={t('mcpSearchPlaceholder')}
-            aria-label={t('mcpSearchPlaceholder')} onChange={(event) => { setQ(event.currentTarget.value) }} />
-        </div>
-      </div>
-      <div className={css.mcpRecCatsRow}>
-        <div className={css.mcpRecCats} role="group" aria-label={t('mcpRecommendTitle')}>
-          {cats.map(([value, label]) => (
+    <div className={css.mcpAddForm}>
+      <p className={css.installHint}>
+        {t('mcpPasteHint', { scope: presetId === undefined ? t('mcpPasteScopeGlobal') : `${t('mcpPasteScopePreset')} “${presetId}”` })}
+      </p>
+      <div className={css.installRow}>
+        <div className={css.mcpAddTypeRow} role="group" aria-label={t('mcpPasteFormat')}>
+          {(['json', 'yaml'] as const).map(value => (
             <button
               key={value}
               type="button"
-              className={`${css.mcpRecCat} ${recCat === value ? css.mcpRecCatActive : ''}`}
-              data-active={recCat === value || undefined}
-              aria-pressed={recCat === value}
-              onClick={() => { setRecCat(value) }}
+              className={`${css.mcpAddTypeBtn} ${format === value ? css.mcpAddTypeActive : ''}`}
+              data-active={format === value || undefined}
+              aria-pressed={format === value}
+              onClick={() => { setFormat(value); reset() }}
             >
-              {label}
+              {value.toUpperCase()}{value === 'yaml' ? ` · ${t('mcpPasteNative')}` : ''}
             </button>
           ))}
         </div>
       </div>
-
-      {/* 联网搜索结果（GitHub / Registry，≥2 字时出现） */}
-      {external.length > 0 && (
-        <>
-          <div className={css.mcpRecResultsTitle}>{t('mcpSearchResults', { n: external.length })}</div>
-          <div className={css.mcpRecGrid}>
-            {external.map((item) => {
-              const alreadyAdded = addedIds.has(item.id)
-              const resolving = resolvingId === item.id
-              const resolveError = resolveErr === item.id
-              return (
-                <section key={item.id} className={`${css.mcpRecCard} ${css.mcpRecCardExternal}`}>
-                  <div className={css.mcpRecCardHead}>
-                    <span className={css.mcpRowLogo} data-kind={item.source === 'github' ? 'github' : 'ext'}><McpLogoIcon kind="github" /></span>
-                    <span className={css.mcpRecCardTitleRow}>
-                      <span className={css.mcpRecCardName}>{item.name}</span>
-                      <span className={css.mcpRecCardTags}>
-                        <span className={css.mcpRecCatTag}>{item.source === 'github' ? 'GitHub' : 'Registry'}</span>
-                        {typeof item.stars === 'number' && <span className={css.mcpRecStars}>★ {item.stars}</span>}
-                      </span>
-                    </span>
-                  </div>
-                  {item.description !== '' && <p className={css.mcpRecCardDesc}>{item.description}</p>}
-                  {resolveError && <p className={css.mcpResolveErr}>{t('mcpResolveFailed')}</p>}
-                  <div className={css.mcpRecCardFoot}>
-                    <span className={css.mcpRecCardMeta}>{item.source === 'github' ? t('mcpOpenGitHub') : t('mcpOpenRegistry')}</span>
-                    {item.source === 'registry' && item.url !== undefined
-                      ? (
-                        alreadyAdded
-                          ? <span className={css.mcpAddedTag}>{t('mcpLiveRegistered')}</span>
-                          : (
-                            <button type="button" className={css.mcpAddSmallBtn} disabled={resolving}
-                              onClick={() => {
-                                copyRow({
-                                  ...externalToRow(item),
-                                  type: item.url?.toLowerCase().includes('/sse') ? 'sse' : 'http',
-                                  url: item.url,
-                                })
-                              }}>
-                              <IconPlusOutline16 size={13} aria-hidden="true" />&nbsp;{copiedId === item.id ? t('mcpCopyDone') : t('mcpAdd')}
-                            </button>
-                          )
-                      )
-                      : alreadyAdded
-                        ? <span className={css.mcpAddedTag}>{t('mcpLiveRegistered')}</span>
-                        : (
-                          <div className={css.mcpExtActions}>
-                            <button type="button" className={css.mcpAddSmallBtn} disabled={resolving}
-                              onClick={() => { void resolveAndAdd(item) }}>
-                              {resolving ? t('mcpResolving') : copiedId === item.id ? t('mcpCopyDone') : t('mcpAdd')}
-                            </button>
-                            {typeof item.url === 'string' && (
-                              <a className={css.mcpOpenLink} href={item.url} target="_blank" rel="noreferrer">
-                                {t('mcpOpen')}
-                                <McpExtIcon size={11} />
-                              </a>
-                            )}
-                          </div>
-                        )}
-                  </div>
-                </section>
-              )
-            })}
-          </div>
-        </>
+      <textarea
+        className={css.inlineInput}
+        value={text}
+        placeholder={placeholder}
+        aria-label={t('mcpPasteFormat')}
+        rows={8}
+        spellCheck={false}
+        autoFocus
+        style={{
+          fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+          fontSize: 12,
+          lineHeight: '18px',
+          minHeight: 120,
+          resize: 'vertical',
+          whiteSpace: 'pre',
+        }}
+        onChange={(event) => { setText(event.currentTarget.value); reset() }}
+      />
+      {errors.length > 0 && (
+        <div className={css.error} role="alert">
+          {errors.map(item => <div key={item}>{item}</div>)}
+        </div>
       )}
-      {searching && external.length === 0 && <p className={css.mcpEmptyList}>{t('mcpSearching')}</p>}
-      {!searching && external.length === 0 && q.trim().length >= 2 && (
-        <p className={css.mcpEmptyList}>{t('mcpSearchEmpty', { q: q.trim() })}</p>
+      {warnings.length > 0 && (
+        <div className={css.installHint} role="status">
+          {warnings.map(item => <div key={item}>· {item}</div>)}
+        </div>
       )}
-
-      <div className={css.mcpRecGrid}>
-        {filtered.map((row) => {
-          const added = addedIds.has(row.id)
-          return (
-            <section key={row.id} className={css.mcpRecCard}>
-              <div className={css.mcpRecCardHead}>
-                <span className={css.mcpRowLogo} data-kind={row.id}><McpLogoIcon kind={row.id === 'slack' ? 'slack' : row.id === 'websearch' ? 'globe' : row.id === 'github' ? 'github' : 'db'} /></span>
-                <span className={css.mcpRecCardTitleRow}>
-                  <span className={css.mcpRecCardName}>{row.name}</span>
-                  <span className={css.mcpRecCardTags}>
-                    <span className={css.mcpRowTag} data-official={row.tag === 'official' || undefined}>{t(row.tag === 'official' ? 'mcpTagOfficial' : 'mcpTagCommunity')}</span>
-                    <span className={css.mcpRecCatTag}>{row.category}</span>
-                  </span>
-                </span>
-              </div>
-              <p className={css.mcpRecCardDesc}>{row.description}</p>
-              <div className={css.mcpRecCardFoot}>
-                <span className={css.mcpRecCardMeta}>{row.category} · {t(row.tag === 'official' ? 'mcpTagOfficial' : 'mcpTagCommunity')}</span>
-                {added ? (
-                  <span className={css.mcpAddedTag}>{t('mcpLiveRegistered')}</span>
-                ) : (
-                  <button type="button" className={css.mcpAddSmallBtn} onClick={() => { copyRow(row) }}>
-                    <IconPlusOutline16 size={13} aria-hidden="true" />&nbsp;{copiedId === row.id ? t('mcpCopyDone') : t('mcpAdd')}
-                  </button>
-                )}
-              </div>
-            </section>
-          )
-        })}
+      {preview !== null && (
+        <div>
+          <p className={css.installHint}>{t('mcpPasteParsed', { n: preview.names.length, names: preview.names.join(', ') })}</p>
+          <pre style={{
+            margin: 0,
+            maxHeight: 200,
+            overflow: 'auto',
+            fontFamily: 'ui-monospace, SFMono-Regular, Consolas, monospace',
+            fontSize: 11,
+            lineHeight: '16px',
+            whiteSpace: 'pre-wrap',
+          }}>{preview.yaml}</pre>
+        </div>
+      )}
+      {notice !== null && <p className={css.mcpCopyHint} role="status">{notice}</p>}
+      <div className={css.inlineForm}>
+        <Button variant="outline" type="button" disabled={busy !== null || empty} onClick={previewNow}>
+          {busy === 'preview' ? t('mcpPasteChecking') : t('mcpPasteCheck')}
+        </Button>
+        <Button variant="primary" type="button" disabled={busy !== null || empty} onClick={addNow}>
+          {busy === 'add' ? t('mcpPasteAdding') : t('mcpAddConfirm')}
+        </Button>
+        <Button variant="outline" type="button" onClick={onCancel}>{t('cancel')}</Button>
       </div>
     </div>
   )
 }
 
-/** 推荐 MCP Server 菜单图标（星）。 */
-function McpRecommendIcon({ size = 15 }: { size?: number }): JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-      <path d="M12 4.5c.5 3.6 1.9 5 5.5 5.5-3.6.5-5 1.9-5.5 5.5-.5-3.6-1.9-5-5.5-5.5 3.6-.5 5-1.9 5.5-5.5Z" />
-    </svg>
-  )
-}
-
-/** 列表行小 logo（数据库/地球/GitHub/Slack 多彩近似）。 */
-function McpLogoIcon({ kind }: { kind: 'db' | 'globe' | 'github' | 'slack' }): JSX.Element {
-  if (kind === 'db') {
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-        <ellipse cx="12" cy="6" rx="8" ry="3.2" />
-        <path d="M4 6v12c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2V6" />
-        <path d="M4 12c0 1.8 3.6 3.2 8 3.2s8-1.4 8-3.2" />
-      </svg>
-    )
-  }
-  if (kind === 'globe') {
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-        <circle cx="12" cy="12" r="8.4" />
-        <path d="M3.6 12h16.8M12 3.6c2.9 2.7 2.9 14.1 0 16.8-2.9-2.7-2.9-14.1 0-16.8Z" />
-      </svg>
-    )
-  }
-  if (kind === 'github') {
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-        <path d="M12 2.5a9.5 9.5 0 0 0-3 18.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.2-1.5-1.2-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1 1.6 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.7 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A9.5 9.5 0 0 0 12 2.5Z" />
-      </svg>
-    )
-  }
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9.2 3.4 8 5.8l2.4 1.2-2.4 1.2 1.2 2.4 2.4-1.2 1.2 2.4 1.2-2.4 2.4 1.2M9.2 3.4l1.2 2.4M9.2 3.4 8 5.8" fill="none" stroke="#36C5F0" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M14.6 20.6 13.4 18.2l-2.4 1.2M14.6 20.6l1.2-2.4M14.6 20.6l-1.2-2.4" fill="none" stroke="#2EB67D" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M3.4 14.8 5.8 16l-1.2 2.4 2.4-1.2 1.2 2.4 1.2-2.4 2.3 1.3M3.4 14.8l2.4 1.2" fill="none" stroke="#E01E5A" strokeWidth="1.7" strokeLinecap="round" transform="rotate(180 8 16.6)" />
-      <path d="M20.6 9.2 18.2 8l1.3-2.4-2.5 1.3-1.2-2.4-1.2 2.4-2.4-1.3M20.6 9.2l-2.4-1.2" fill="none" stroke="#ECB22E" strokeWidth="1.7" strokeLinecap="round" transform="rotate(180 16 7.4)" />
-    </svg>
-  )
-}
-
-/** 外部链接小图标。 */
-function McpExtIcon({ size = 12 }: { size?: number }): JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...catStroke()}>
-      <path d="M14 5h5v5M19 5l-8 8M10 6.5H6.5v11h11V14" />
-    </svg>
-  )
-}
-
-/** 铃铛小图标。 */
-function McpBellIcon({ size = 17 }: { size?: number }): JSX.Element {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.7 21a2 2 0 0 1-3.4 0" />
-    </svg>
-  )
-}
-
-/** 自定义添加 MCP Server 表单弹窗：提交生成 cordis.patch.yml 配置片段并复制。 */
-function McpAddModal({ t, open, onClose }: {
+/** 添加全局 MCP Server 弹窗：粘贴 JSON / DSH 原生 YAML，直接写入 profile patch。 */
+function McpAddModal({ t, open, onClose, onAdded }: {
   t: (key: string) => string
   open: boolean
   onClose: () => void
+  onAdded: (added: string[]) => void
 }): JSX.Element {
-  const [name, setName] = useState('')
-  const [desc, setDesc] = useState('')
-  const [type, setType] = useState<'stdio' | 'http' | 'sse'>('stdio')
-  const [command, setCommand] = useState('')
-  const [url, setUrl] = useState('')
-  const [copied, setCopied] = useState(false)
-  const trimmed = name.trim()
-  const valid = trimmed !== '' && (type === 'stdio' ? command.trim() !== '' : url.trim() !== '')
-  const submit = (event: React.FormEvent<HTMLFormElement>): void => {
-    event.preventDefault()
-    if (!valid) return
-    const snippet = mcpConfigureSnippet(trimmed, type, command.trim(), url.trim())
-    void navigator.clipboard.writeText(snippet).then(() => { setCopied(true) }, () => { /* 剪贴板不可用时保持表单 */ })
-    setDesc('')
-  }
   return (
     <Modal open={open} onClose={onClose} closeLabel={t('close')} title={t('mcpAddModalTitle')}>
-      <form className={css.mcpAddForm} onSubmit={submit}>
-        <div className={css.installRow}>
-          <input className={css.inlineInput} value={name} placeholder={t('mcpAddNamePlaceholder')}
-            aria-label={t('mcpAddName')} autoFocus onChange={(event) => { setName(event.currentTarget.value) }} />
-        </div>
-        <div className={css.installRow}>
-          <input className={css.inlineInput} value={desc} placeholder={t('mcpAddDescPlaceholder')}
-            aria-label={t('mcpAddDesc')} onChange={(event) => { setDesc(event.currentTarget.value) }} />
-        </div>
-        <div className={css.installRow}>
-          <div className={css.mcpAddTypeRow} role="group" aria-label={t('mcpAddType')}>
-            {(['stdio', 'http', 'sse'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                className={`${css.mcpAddTypeBtn} ${type === value ? css.mcpAddTypeActive : ''}`}
-                data-active={type === value || undefined}
-                aria-pressed={type === value}
-                onClick={() => { setType(value) }}
-              >
-                {value.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className={css.installRow}>
-          {type === 'stdio' ? (
-            <input className={css.inlineInput} value={command} placeholder={t('mcpAddCommandPlaceholder')}
-              aria-label={t('mcpAddCommand')} onChange={(event) => { setCommand(event.currentTarget.value) }} />
-          ) : (
-            <input className={css.inlineInput} value={url} placeholder={t('mcpAddUrlPlaceholder')}
-              aria-label={t('mcpAddUrl')} onChange={(event) => { setUrl(event.currentTarget.value) }} />
-          )}
-        </div>
-        <div className={css.installActions}>
-          <Button variant="primary" type="submit" disabled={!valid}>{t('mcpAddConfirm')}</Button>
-          <Button variant="outline" type="button" onClick={onClose}>{t('cancel')}</Button>
-        </div>
-        {copied && <p className={css.mcpCopyHint} role="status">{t('mcpCopyHint')}</p>}
-      </form>
+      <McpPasteAdd t={t} onAdded={onAdded} onCancel={onClose} />
     </Modal>
-  )
-}
-
-/** 工具名派发表：按 server id 前缀匹配，未命中用通用工具。 */
-const MCP_TOOL_PRESETS: Record<string, string[]> = {
-  filesystem: ['read_file', 'write_file', 'edit_file', 'search_files', 'list_directory'],
-  websearch: ['web_search', 'fetch_url', 'crawl_page'],
-  github: ['list_repos', 'get_issue', 'create_issue', 'list_pull_requests', 'search_code'],
-  database: ['sql_query', 'sql_execute', 'list_tables', 'describe_table'],
-  slack: ['send_message', 'read_channels', 'read_messages', 'list_users'],
-}
-const MCP_TOOL_DESCS: Record<string, string> = {
-  read_file: '读取指定路径的文件内容',
-  write_file: '写入或覆盖文件内容',
-  edit_file: '编辑文件指定片段',
-  search_files: '按名称/内容搜索文件',
-  list_directory: '列出目录内容',
-  web_search: '执行网络搜索，返回相关结果',
-  fetch_url: '抓取网页内容并提取文本',
-  crawl_page: '抓取并解析站点页面',
-  list_repos: '列出仓库列表',
-  get_issue: '读取 Issue 详情',
-  create_issue: '创建 Issue',
-  list_pull_requests: '列出 Pull Request',
-  search_code: '搜索代码片段',
-  sql_query: '执行查询 SQL',
-  sql_execute: '执行写 SQL',
-  list_tables: '列出数据表',
-  describe_table: '查看表结构',
-  send_message: '发送频道消息',
-  read_channels: '读取频道列表',
-  read_messages: '读取频道消息',
-  list_users: '列出工作区用户',
-}
-
-/** 工具列表页：真实注册的 mcp__ 工具（来自 /api/triad/mcp-status）。 */
-function McpToolsView({ t, live }: { t: (key: string) => string; live: LiveMcpStatus }): JSX.Element {
-  const [q, setQ] = useState('')
-  const tools: Array<{ name: string; server: string; desc: string }> = []
-  if (live.state === 'ready') {
-    for (const server of live.data.servers) {
-      for (const tool of server.tools) tools.push({ name: tool.name, server: server.serverName, desc: tool.description })
-    }
-  }
-  const ql = q.trim().toLowerCase()
-  const filtered = tools.filter((item) => ql === '' || item.name.toLowerCase().includes(ql) || item.server.toLowerCase().includes(ql) || item.desc.toLowerCase().includes(ql))
-  return (
-    <div className={css.mcpServerMain}>
-      <div className={css.mcpRecHead}>
-        <span className={css.mcpRecommendTitle}>{t('mcpToolsTitle', { n: tools.length })}</span>
-        <div className={css.mcpToolSearch}>
-          <SearchIcon />
-          <input className={css.mcpToolSearchInput} value={q} placeholder={t('mcpToolsSearch')}
-            aria-label={t('mcpToolsSearch')} onChange={(event) => { setQ(event.currentTarget.value) }} />
-        </div>
-      </div>
-      {live.state === 'unavailable' ? (
-        <p className={css.mcpEmptyList}>{t('mcpLiveUnavailable')}</p>
-      ) : filtered.length === 0 ? (
-        <p className={css.mcpEmptyList}>{tools.length === 0 ? t('mcpLiveEmpty') : t('noMatch')}</p>
-      ) : (
-        <section className={css.mcpListCard}>
-          <ul className={css.mcpList}>
-            {filtered.map((item) => (
-              <li key={`${item.server}-${item.name}`} className={css.mcpRow}>
-                <span className={css.mcpRowLogo}><IconCodeOutline16 size={16} /></span>
-                <span className={css.mcpRowBody}>
-                  <span className={css.mcpRowNameRow}>
-                    <span className={css.mcpRowName} style={{ fontFamily: 'ui-monospace,monospace', fontSize: 12.5 }}>{item.name}</span>
-                    <span className={css.mcpRecCatTag}>{item.server}</span>
-                  </span>
-                  <span className={css.mcpRowDesc}>{item.desc}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
-  )
-}
-
-/** 连接日志页：时间线展示添加/启停/删除动作。 */
-function McpLogsView({ t, logs, onClear }: { t: (key: string) => string; logs: McpLogEntry[]; onClear: () => void }): JSX.Element {
-  const kindMeta: Record<McpLogEntry['kind'], string> = {
-    add: t('mcpLogAdd'), enable: t('mcpLogEnable'), disable: t('mcpLogDisable'), remove: t('mcpLogRemove'),
-  }
-  const fmt = (time: number): string => {
-    const d = new Date(time)
-    const pad = (n: number): string => String(n).padStart(2, '0')
-    return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  }
-  return (
-    <div className={css.mcpServerMain}>
-      <div className={css.mcpRecHead}>
-        <span className={css.mcpRecommendTitle}>{t('mcpLogTitle')}</span>
-        {logs.length > 0 && (
-          <button type="button" className={css.mcpLogClear} onClick={onClear}>{t('mcpLogClear')}</button>
-        )}
-      </div>
-      {logs.length === 0 ? (
-        <p className={css.mcpEmptyList}>{logs.length === 0 ? t('mcpLogNewNote') : t('mcpLogEmpty')}</p>
-      ) : (
-        <section className={css.mcpListCard}>
-          <ul className={css.mcpList}>
-            {[...logs].reverse().map((entry) => (
-              <li key={entry.id} className={css.mcpLogRow}>
-                <span className={css.mcpLogDot} data-kind={entry.kind} aria-hidden="true" />
-                <span className={css.mcpLogBody}>
-                  <span className={css.mcpLogText}>
-                    <strong>{entry.name}</strong> · {kindMeta[entry.kind]}
-                  </span>
-                  <span className={css.mcpRowDesc}>{fmt(entry.time)}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
-  )
-}
-
-/** 配置模板页：三种连接类型示例 JSON + 复制。 */
-function McpConfigView({ t }: { t: (key: string) => string }): JSX.Element {
-  const [copied, setCopied] = useState<string | null>(null)
-  const templates: Array<{ id: string; title: string; json: string }> = [
-    {
-      id: 'stdio',
-      title: 'stdio',
-      json: JSON.stringify({ type: 'stdio', command: 'npx -y @modelcontextprotocol/server-filesystem', args: ['/path/to/dir'], env: {} }, null, 2),
-    },
-    {
-      id: 'http',
-      title: 'http',
-      json: JSON.stringify({ type: 'http', url: 'https://example.com/mcp', headers: { authorization: 'Bearer <token>' } }, null, 2),
-    },
-    {
-      id: 'sse',
-      title: 'sse',
-      json: JSON.stringify({ type: 'sse', url: 'https://example.com/sse', headers: {} }, null, 2),
-    },
-  ]
-  const copy = async (id: string, text: string): Promise<void> => {
-    try {
-      if (navigator.clipboard !== undefined) await navigator.clipboard.writeText(text)
-      setCopied(id)
-      window.setTimeout(() => { setCopied((current) => current === id ? null : current) }, 1400)
-    } catch {
-      /* 剪贴板不可用忽略 */
-    }
-  }
-  return (
-    <div className={css.mcpServerMain}>
-      <div className={css.mcpRecHead}>
-        <span className={css.mcpRecommendTitle}>{t('mcpConfigTitle')}</span>
-      </div>
-      <div className={css.mcpConfigGrid}>
-        {templates.map((item) => (
-          <section key={item.id} className={css.mcpConfigCard}>
-            <div className={css.mcpConfigHead}>
-              <span className={css.mcpConfigTitle}>{item.title}</span>
-              <button type="button" className={css.mcpConfigCopy} onClick={() => { void copy(item.id, item.json) }}>
-                {copied === item.id ? `${t('copied')} ✓` : t('mcpConfigCopy')}
-              </button>
-            </div>
-            <pre className={css.mcpConfigCode}>{item.json}</pre>
-          </section>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/** 推荐 Skill 视图：官方 skills 目录卡片 + 一键安装。 */
-/** MCP Server 页（图一头部 + 统计卡 / 图二真实注册列表；解释内容改为右侧悬浮层）。 */
-function McpServerView({ t, live, onAddCustom, onOpenInfo, onRefresh, onLogged }: {
-  t: (key: string) => string
-  live: LiveMcpStatus
-  onAddCustom: () => void
-  onOpenInfo: () => void
-  onRefresh: () => void
-  onLogged: (kind: McpLogEntry['kind'], name: string) => void
-}): JSX.Element {
-  const ready = live.state === 'ready' ? live.data : null
-  const serverCount = ready?.serverCount ?? 0
-  const toolCount = ready?.toolCount ?? 0
-  /** 切换中（防连点）/ 切换失败的 serverName。 */
-  const [toggling, setToggling] = useState<string | null>(null)
-  const [toggleError, setToggleError] = useState<string | null>(null)
-  const toggleServer = (server: LiveMcpServer): void => {
-    if (toggling !== null || !server.config.editable) return
-    setToggling(server.serverName)
-    setToggleError(null)
-    void fetch('/api/triad/mcp-config', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify({ serverName: server.serverName, disabled: !server.config.disabled }),
-    })
-      .then((response) => response.json().catch(() => null))
-      .then((body) => {
-        if (typeof body !== 'object' || body === null || (body as { ok?: boolean }).ok !== true) {
-          setToggleError(server.serverName)
-          return
-        }
-        onRefresh()
-      })
-      .catch(() => { setToggleError(server.serverName) })
-      .finally(() => { setToggling(null) })
-  }
-  /** 删除确认弹窗目标（null=关闭）/ 删除中 / 删除失败的 serverName。 */
-  const [removeReq, setRemoveReq] = useState<LiveMcpServer | null>(null)
-  const [removing, setRemoving] = useState(false)
-  const [removeError, setRemoveError] = useState<string | null>(null)
-  /** 删除整个 mcp-client 条目（host 从 cordis.patch.yml 移除 + 热重载）。 */
-  const removeServer = (server: LiveMcpServer): void => {
-    if (removing) return
-    setRemoving(true)
-    setRemoveError(null)
-    void fetch('/api/triad/mcp-config', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', accept: 'application/json' },
-      body: JSON.stringify({ serverName: server.serverName, action: 'remove' }),
-    })
-      .then((response) => response.json().catch(() => null))
-      .then((body) => {
-        if (typeof body !== 'object' || body === null || (body as { ok?: boolean }).ok !== true) {
-          setRemoveError(server.serverName)
-          return
-        }
-        onLogged('remove', server.serverName)
-        onRefresh()
-      })
-      .catch(() => { setRemoveError(server.serverName) })
-      .finally(() => { setRemoving(false) })
-  }
-  const stats: Array<{ tone: 'blue' | 'green' | 'violet'; icon: JSX.Element; title: string; value: number; desc: string }> = [
-    { tone: 'blue', icon: <StatCubeIcon size={20} />, title: t('mcpStatTotal'), value: serverCount, desc: t('mcpStatTotalDesc') },
-    { tone: 'green', icon: <StatCheckCircleIcon size={20} />, title: t('mcpLiveRegisteredTitle'), value: serverCount, desc: t('mcpLiveRegistered') },
-    { tone: 'violet', icon: <StatSquareIcon size={20} />, title: t('mcpStatTools'), value: toolCount, desc: t('mcpStatToolsDesc') },
-  ]
-  return (
-    <div className={css.mcpServerMain}>
-          {/* 图一：MCP 管理头部 */}
-          <header className={css.mcpHeader}>
-            <div className={css.mcpHeaderText}>
-              <div className={css.mcpHeaderTitleRow}>
-                <span className={css.mcpHeaderTitle}>{t('mcpTitle')}</span>
-                <span className={css.mcpHeaderBadge}>{t('mcpProtocol')}</span>
-              </div>
-              <span className={css.mcpHeaderSub}>{t('mcpSubtitle')}</span>
-            </div>
-            <div className={css.mcpHeaderActions}>
-              <button type="button" className={css.mcpMarketBtn} onClick={onRefresh} title={t('mcpLiveRefresh')}>
-                {t('mcpLiveRefresh')}
-              </button>
-              <button type="button" className={css.mcpAddBtn} onClick={onAddCustom}>
-                <IconPlusOutline16 size={14} aria-hidden="true" />&nbsp;{t('mcpAddServer')}
-              </button>
-              <button type="button" className={css.mcpBellBtn} aria-label={t('notifications')}>
-                <McpBellIcon size={17} />
-              </button>
-            </div>
-          </header>
-
-          {/* 真实状态说明条 */}
-          <p className={css.mcpEmptyList}>{t('mcpLiveNote')}</p>
-
-          {/* 图一：统计卡（复用技能统计卡样式） */}
-          <div className={css.statsRow} data-mcp="true">
-            {stats.map((stat) => (
-              <div key={stat.title} className={css.stat}>
-                <span className={css.statIconCol}>
-                  <span className={css.statIcon} data-tone={stat.tone}>{stat.icon}</span>
-                  <i className={css.statGlow} data-tone={stat.tone} aria-hidden="true" />
-                </span>
-                <span className={css.statBody}>
-                  <span className={css.statLabel}>{stat.title}</span>
-                  <span className={css.statValueRow}>
-                    <span className={css.statValue}>{stat.value}</span>
-                  </span>
-                  <span className={css.statDesc}>{stat.desc}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* 图二：MCP Server 列表（真实注册卡片网格） */}
-          <section className={css.mcpListCard}>
-            <div className={css.mcpListHead}>
-              <span className={css.mcpListTitle}>{t('mcpListTitle')}</span>
-              <span className={css.mcpListCount}>{serverCount}</span>
-            </div>
-            {live.state === 'unavailable' ? (
-              <p className={css.mcpEmptyList}>{t('mcpLiveUnavailable')}</p>
-            ) : serverCount === 0 ? (
-              <p className={css.mcpEmptyList}>{t('mcpLiveEmpty')}</p>
-            ) : (
-              <div className={css.mcpRecGrid}>
-                {ready?.servers.map((server) => (
-                  <section key={server.serverName} className={css.mcpRecCard}>
-                    <div className={css.mcpRecCardHead}>
-                      <span className={css.mcpRowLogo} data-kind="live"><McpLogoIcon kind="github" /></span>
-                      <span className={css.mcpRecCardTitleRow}>
-                        <span className={css.mcpRecCardName}>{server.serverName}</span>
-                        <span className={css.mcpRecCardTags}>
-                          <span className={css.mcpRecCatTag}>{server.config.disabled ? t('mcpLiveDisabled') : t('mcpLiveRegistered')}</span>
-                          <span className={css.mcpRecCatTag}>{server.toolCount} {t('mcpLiveToolsOf')}</span>
-                        </span>
-                      </span>
-                      {server.config.editable ? (
-                        <Tooltip label={server.config.disabled ? t('enableSkill') : t('mcpLiveDisabled')} side="bottom" delayMs={500}>
-                          <button
-                            type="button"
-                            role="switch"
-                            aria-checked={!server.config.disabled}
-                            aria-label={server.config.disabled ? t('enableSkill') : t('mcpLiveDisabled')}
-                            title={server.config.disabled ? t('enableSkill') : t('mcpLiveDisabled')}
-                            className={`${css.toggle} ${server.config.disabled ? css.toggleOff : css.toggleOn}`}
-                            disabled={toggling === server.serverName}
-                            onClick={() => { toggleServer(server) }}
-                          >
-                            <span className={css.toggleKnob} aria-hidden="true" />
-                          </button>
-                        </Tooltip>
-                      ) : null}
-                    </div>
-                    {server.config.disabled ? (
-                      <p className={css.mcpRecCardDesc}>{t('mcpLiveDisabled')} · 工具不可用</p>
-                    ) : (
-                      <p className={css.mcpRecCardDesc}>
-                        {server.tools.slice(0, 6).map((tool) => tool.name.replace(/^mcp__[^_]+__/, '')).join(' · ')}
-                        {server.toolCount > 6 ? ` · +${server.toolCount - 6}` : ''}
-                      </p>
-                    )}
-                    <div className={css.mcpCardFoot}>
-                      <span className={css.mcpCardItem}>
-                        <span className={css.mcpCardItemLabel}>
-                          {removeError === server.serverName ? t('mcpLiveRemoveFailed')
-                            : toggleError === server.serverName ? t('mcpLiveToggleFailed')
-                              : t('mcpLiveConfigHint')}
-                        </span>
-                      </span>
-                      {server.config.editable ? (
-                        <button
-                          type="button"
-                          className={css.mcpCardDelete}
-                          title={t('mcpRemove')}
-                          disabled={removing}
-                          onClick={() => { setRemoveError(null); setRemoveReq(server) }}
-                        >
-                          <IconTrashOutline16 size={13} aria-hidden="true" />
-                          {t('mcpRemove')}
-                        </button>
-                      ) : null}
-                    </div>
-                  </section>
-                )) ?? null}
-              </div>
-            )}
-          </section>
-          {/* 删除确认弹窗：破坏性操作（danger 红钮），点确认后 host 移除条目并热重载 */}
-          {removeReq !== null && (
-            <ConfirmDialog
-              open
-              title={t('mcpRemoveConfirmTitle')}
-              message={t('mcpRemoveConfirmMsg', { name: removeReq.serverName })}
-              confirmLabel={t('mcpRemove')}
-              cancelLabel={t('cancel')}
-              danger
-              onConfirm={() => { removeServer(removeReq) }}
-              onClose={() => { setRemoveReq(null) }}
-            />
-          )}
-        </div>
-  )
-}
-
-/** MCP 解释浮层（什么是 MCP / 工作原理 / 快速上手）——与技能指南浮层同款。 */
-function McpInfoOverlay({ t, onClose, left, top, height }: {
-  t: (key: string) => string
-  onClose: () => void
-  left: number
-  top: number
-  height: number
-}): JSX.Element {
-  const points: Array<[string, string]> = [
-    [t('mcpPoint1'), t('mcpPoint1Desc')],
-    [t('mcpPoint2'), t('mcpPoint2Desc')],
-    [t('mcpPoint3'), t('mcpPoint3Desc')],
-    [t('mcpPoint4'), t('mcpPoint4Desc')],
-  ]
-  const steps: Array<[number, string, string]> = [
-    [1, t('mcpStep1'), t('mcpStep1Desc')],
-    [2, t('mcpStep2'), t('mcpStep2Desc')],
-    [3, t('mcpStep3'), t('mcpStep3Desc')],
-  ]
-  return createPortal(
-    <aside className={css.mcpInfoOverlay} role="complementary" aria-label={t('mcpOverlayTitle')} style={{ left, top, height }}>
-      <div className={css.mcpInfoOverlayHead}>
-        <span className={css.mcpInfoOverlayIcon}><McpServerMenuIcon size={15} /></span>
-        <span className={css.mcpInfoOverlayTitle}>{t('mcpOverlayTitle')}</span>
-        <button type="button" className={css.guidePanelClose} aria-label={t('close')} onClick={onClose}>
-          <IconCloseOutline16 size={14} aria-hidden="true" />
-        </button>
-      </div>
-      <div className={css.mcpInfoOverlayBody}>
-        {/* 什么是 MCP */}
-        <section className={css.mcpInfoCard}>
-          <div className={css.mcpInfoCardTitle}>{t('mcpWhatTitle')}</div>
-          <p className={css.mcpInfoDesc}>{t('mcpWhatDesc')}</p>
-          <ul className={css.mcpInfoPoints}>
-            {points.map(([title, desc]) => (
-              <li key={title} className={css.mcpPoint}>
-                <span className={css.mcpPointIcon}><IconSkillOutline16 size={13} aria-hidden="true" /></span>
-                <span className={css.mcpPointBody}>
-                  <span className={css.mcpPointTitle}>{title}</span>
-                  <span className={css.mcpPointDesc}>{desc}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        {/* MCP 工作原理 */}
-        <section className={css.mcpInfoCard}>
-          <div className={css.mcpInfoCardTitle}>{t('mcpHowTitle')}</div>
-          <div className={css.mcpFlow}>
-            <div className={css.mcpFlowNode}>
-              <span className={css.mcpFlowIcon}><IconAgentPresetOutline16 size={16} /></span>
-              <span className={css.mcpFlowLabel}>{t('mcpAgent')}</span>
-            </div>
-            <span className={css.mcpFlowArrow}>
-              <span className={css.mcpFlowArrowText}>{t('mcpReq')}</span>
-              <svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true"><path d="M0 5h19M15 1l5 4-5 4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </span>
-            <div className={css.mcpFlowNode}>
-              <span className={css.mcpFlowIcon} data-client="true"><IconAgentPresetOutline16 size={16} /></span>
-              <span className={css.mcpFlowLabel}>{t('mcpClient')}</span>
-            </div>
-            <span className={css.mcpFlowArrow}>
-              <span className={css.mcpFlowArrowText}>{t('mcpCall')}</span>
-              <svg width="22" height="10" viewBox="0 0 22 10" aria-hidden="true"><path d="M0 5h19M15 1l5 4-5 4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            </span>
-            <div className={css.mcpFlowNode}>
-              <span className={css.mcpFlowIcon} data-server="true"><IconDataOutline16 size={16} /></span>
-              <span className={css.mcpFlowLabel}>{t('mcpServerNode')}</span>
-            </div>
-          </div>
-          <div className={css.mcpFlowExt}>
-            <span className={css.mcpFlowExtLabel}>{t('mcpExt')}</span>
-            <div className={css.mcpFlowExtIcons}>
-              <span className={css.mcpFlowExtIcon}><McpLogoIcon kind="db" /></span>
-              <span className={css.mcpFlowExtIcon}><McpLogoIcon kind="globe" /></span>
-              <span className={css.mcpFlowExtIcon}><IconCodeOutline16 size={16} /></span>
-              <span className={css.mcpFlowExtIcon}><span className={css.mcpApiText}>API</span></span>
-            </div>
-          </div>
-        </section>
-
-        {/* 快速上手 */}
-        <section className={css.mcpInfoCard}>
-          <div className={css.mcpInfoCardTitle}>{t('mcpStartTitle')}</div>
-          <ol className={css.mcpSteps}>
-            {steps.map(([num, title, desc]) => (
-              <li key={num} className={css.mcpStep}>
-                <span className={css.mcpStepNum}>{num}</span>
-                <span className={css.mcpStepBody}>
-                  <span className={css.mcpStepTitle}>{title}</span>
-                  <span className={css.mcpStepDesc}>{desc}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      </div>
-    </aside>,
-    document.body,
   )
 }
 
@@ -1857,6 +1812,8 @@ const css = {
   mcpCardItemLabel: 'skm-mcp-card-item-label',
   mcpCardItemMeta: 'skm-mcp-card-item-meta',
   mcpCardDelete: 'skm-mcp-card-delete',
+  mcpToolChips: 'skm-mcp-tool-chips',
+  mcpToolChip: 'skm-mcp-tool-chip',
   mcpRecCats: 'skm-mcp-rec-cats',
   mcpRecCat: 'skm-mcp-rec-cat',
   mcpRecCatActive: 'skm-mcp-rec-cat-active',
@@ -2362,7 +2319,8 @@ const SHEET = `
 .skm-mcp-tab[data-active]{background:var(--dsw-alias-state-business-primary,#3d6be5);border-color:var(--dsw-alias-state-business-primary,#3d6be5);color:#fff;box-shadow:0 2px 8px rgba(61,107,229,.3)}
 /* MCP Server 页：左主列 + 右信息列 */
 .skm-mcp-server-layout{flex:none;display:flex;align-items:flex-start;gap:18px;min-width:0}
-.skm-mcp-server-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+/* MCP 页主容器 = 滚动容器：卡片多了/工具多了都能滚到底（父层 .skm-hub-main 是 overflow:hidden）。 */
+.skm-mcp-server-main{flex:1 1 auto;min-width:0;min-height:0;display:flex;flex-direction:column;gap:16px;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-gutter:stable}
 /* 图一：头部 */
 .skm-mcp-header{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
 .skm-mcp-header-text{min-width:0;display:flex;flex-direction:column;gap:5px}
@@ -2461,6 +2419,17 @@ const SHEET = `
 .skm-mcp-rec-card-name{font-size:14px;font-weight:600;line-height:20px;color:var(--dsw-alias-label-primary,#1f2430);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .skm-mcp-rec-card-tags{display:flex;align-items:center;gap:6px}
 .skm-mcp-rec-cat-tag{flex:none;display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 12%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5);font-size:10px;line-height:14px}
+.skm-mcp-rec-cat-tag[data-off]{background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#f5a524) 16%,transparent);color:var(--dsw-alias-state-warn-label,#b26b00)}
+.skm-mcp-rec-cat-tag[data-shadow]{background:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 10%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5);border:1px dashed color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 40%,transparent)}
+.skm-mcp-rec-cat-tag[data-locked]{background:var(--dsw-alias-bg-module-platform,#f1f3f5);color:var(--dsw-alias-label-tertiary,#81858c);border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.08))}
+.skm-mcp-tool-chip[data-locked]{text-decoration:line-through}
+.skm-mcp-tool-chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px;max-height:132px;overflow-y:auto}
+.skm-mcp-tool-chip[data-locked]{opacity:.5;cursor:not-allowed;text-decoration:line-through}
+.skm-mcp-tool-chip{font:inherit;font-size:11px;line-height:16px;padding:1px 7px;border-radius:999px;cursor:pointer;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.08));background:var(--dsw-alias-bg-module-platform,#f1f3f5);color:var(--dsw-alias-label-tertiary,#81858c);transition:background .12s,color .12s,border-color .12s}
+.skm-mcp-tool-chip[data-on]{background:color-mix(in srgb,var(--dsw-alias-state-success-primary,#2ba471) 12%,transparent);border-color:color-mix(in srgb,var(--dsw-alias-state-success-primary,#2ba471) 34%,transparent);color:var(--dsw-alias-state-success-primary,#2ba471)}
+.skm-mcp-tool-chip:hover:not(:disabled){border-color:color-mix(in srgb,var(--dsw-alias-state-business-primary,#3d6be5) 50%,transparent);color:var(--dsw-alias-state-business-primary,#3d6be5)}
+.skm-mcp-tool-chip:disabled{opacity:.55;cursor:default}
+.skm-mcp-tool-chip[data-busy]{opacity:.35}
 .skm-mcp-rec-card-desc{margin:0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary,#81858c);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:36px}
 .skm-mcp-rec-card-foot{display:flex;align-items:center;gap:8px;margin-top:auto;padding-top:6px}
 .skm-mcp-rec-card-meta{flex:1;min-width:0;font-size:11px;line-height:16px;color:var(--dsw-alias-label-caption,#adb2b8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3587,71 +3556,54 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
   const [guideOpen, setGuideOpen] = useState(false)
   /** 左侧顶层 tab：SKILL（技能管理）/ MCP（MCP Server）。 */
   const [kind, setKind] = useState<'skill' | 'mcp'>('skill')
-  /** MCP 视图一级导航。 */
-  const [mcpTab, setMcpTab] = useState<'server' | 'tools' | 'log' | 'config'>('server')
-  /** MCP 解释浮层开关（什么是 MCP / 工作原理 / 快速上手）。 */
-  const [mcpInfoOpen, setMcpInfoOpen] = useState(false)
-  /** 已添加的 MCP Server（localStorage 持久化）。 */
-  const [mcpServers, setMcpServers] = useState<McpServerRow[]>(() => loadStoredMcps())
-  /** 推荐 MCP Server：面板打开时从 /api/mcp-recommended 拉取（失败回退内置清单）。 */
-  const [mcpRecommended, setMcpRecommended] = useState<McpServerRow[]>(FALLBACK_RECOMMENDED)
-  /** 真实 MCP 注册状态（/api/triad/mcp-status）：MCP 页统计与列表的真实数据源。 */
+  /** MCP 页范围（'' = 全部 Agent）。 */
+  const [mcpScope, setMcpScope] = useState('')
+  /** MCP Server 搜索词。 */
+  const [mcpQuery, setMcpQuery] = useState('')
+  /** MCP 启用状态筛选（作用于全局条目）。 */
+  const [mcpStatusFilter, setMcpStatusFilter] = useState<'all' | 'on' | 'off'>('all')
+  /** 真实 MCP 注册状态（/api/triad/mcp-status）：MCP 页唯一数据源。 */
   const [mcpLive, mcpRefreshLive] = useMcpLiveState()
-  useEffect(() => {
-    let current = true
-    void fetch('/api/mcp-recommended', { headers: { accept: 'application/json' } })
-      .then((response) => response.json().catch(() => null))
-      .then((body) => {
-        if (!current || body === null || typeof body !== 'object' || !Array.isArray((body as { servers?: unknown }).servers)) return
-        const rows = (body as { servers: Array<{ id?: unknown; name?: unknown; description?: unknown; tag?: unknown; category?: unknown; url?: unknown }> }).servers
-          .filter((item) => typeof item === 'object' && item !== null && typeof item.name === 'string' && item.name !== '')
-          .map((item): McpServerRow => ({
-            id: typeof item.id === 'string' && item.id !== '' ? item.id : `rec-${item.name as string}`,
-            name: item.name as string,
-            description: typeof item.description === 'string' ? item.description : '',
-            tag: item.tag === 'community' ? 'community' : 'official',
-            category: typeof item.category === 'string' && item.category !== '' ? item.category : '精选',
-            enabled: false,
-            source: 'recommended',
-            url: typeof item.url === 'string' ? item.url : undefined,
-          }))
-        if (current && rows.length > 0) setMcpRecommended(rows)
-      }, () => { /* host 接口不可用时保持内置兜底清单 */ })
-    return () => { current = false }
-  }, [])
-  /** 连接日志（localStorage 持久化）。 */
-  const [mcpLogs, setMcpLogs] = useState<McpLogEntry[]>(() => loadStoredLogs())
-  /** 自定义添加表单开关。 */
+  /** 添加 MCP Server（粘贴 JSON / YAML）弹窗开关。 */
   const [mcpAddOpen, setMcpAddOpen] = useState(false)
-  const pushMcpLog = (kind: McpLogEntry['kind'], name: string): void => {
-    setMcpLogs((current) => {
-      const next = [...current, { id: `log-${String(Date.now())}-${Math.random().toString(36).slice(2, 6)}`, time: Date.now(), kind, name }].slice(-100)
-      saveStoredLogs(next)
-      return next
-    })
+  /* ── 添加/启用后自动等工具注册 ────────────────────────────────────────
+   * 写配置只是让 DSH 热重载那一行；MCP 进程要晚几秒才连上并注册工具。
+   * 之前只刷新一次 → 面板上 Server 有了但工具是空的，用户还得自己点「刷新」。
+   * 这里按 2s 轮询，目标都报出工具（或 90s 超时）就收工。 */
+  const mcpWatchTimer = useRef<number | null>(null)
+  const [mcpWaitingTools, setMcpWaitingTools] = useState<string[]>([])
+  /** 最新状态快照：定时器回调里读不到新的闭包值。 */
+  const mcpLiveRef = useRef(mcpLive)
+  useEffect(() => { mcpLiveRef.current = mcpLive }, [mcpLive])
+  const stopMcpWatch = (): void => {
+    if (mcpWatchTimer.current !== null) {
+      window.clearInterval(mcpWatchTimer.current)
+      mcpWatchTimer.current = null
+    }
+    setMcpWaitingTools([])
   }
-  const mutateMcps = (rows: McpServerRow[]): void => { setMcpServers(rows); saveStoredMcps(rows) }
-  const addRecommendMcp = (row: McpServerRow): void => {
-    if (mcpServers.some((item) => item.id === row.id)) return
-    mutateMcps([...mcpServers, { ...row, enabled: true }])
-    pushMcpLog('add', row.name)
-  }
-  const addCustomMcp = (row: Omit<McpServerRow, 'id' | 'source'>): void => {
-    mutateMcps([...mcpServers, { ...row, id: `custom-${String(Date.now())}`, source: 'custom' }])
-    pushMcpLog('add', row.name)
-  }
-  const toggleMcp = (id: string): void => {
-    const target = mcpServers.find((row) => row.id === id)
-    mutateMcps(mcpServers.map((row) => row.id === id ? { ...row, enabled: !row.enabled } : row))
-    if (target !== undefined) pushMcpLog(target.enabled ? 'disable' : 'enable', target.name)
-  }
-  const toggleMcpAutostart = (id: string): void => {
-    mutateMcps(mcpServers.map((row) => row.id === id ? { ...row, autostart: !row.autostart } : row))
-  }
-  const removeMcp = (id: string): void => {
-    const target = mcpServers.find((row) => row.id === id)
-    mutateMcps(mcpServers.filter((row) => row.id !== id))
-    if (target !== undefined) pushMcpLog('remove', target.name)
+  /** 立即刷新一次，然后轮询到这些 Server 注册出工具为止（超时/全部就绪即停）。 */
+  const watchMcpTools = (names: string[]): void => {
+    if (mcpWatchTimer.current !== null) {
+      window.clearInterval(mcpWatchTimer.current)
+      mcpWatchTimer.current = null
+    }
+    mcpRefreshLive()
+    const pending = new Set(names.filter(name => name !== ''))
+    if (pending.size === 0) { setMcpWaitingTools([]); return }
+    setMcpWaitingTools([...pending])
+    const startedAt = Date.now()
+    mcpWatchTimer.current = window.setInterval(() => {
+      const snapshot = mcpLiveRef.current
+      if (snapshot.state === 'ready') {
+        for (const name of [...pending]) {
+          if (mcpRegisteredToolCountOf(snapshot.data, name) > 0) pending.delete(name)
+        }
+        setMcpWaitingTools([...pending])
+      }
+      if (pending.size === 0 || Date.now() - startedAt > MCP_TOOL_WATCH_TIMEOUT_MS) stopMcpWatch()
+      else mcpRefreshLive()
+    }, MCP_TOOL_WATCH_INTERVAL_MS)
   }
 
   const refresh = (): void => {
@@ -3757,26 +3709,27 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
   // 卸载时清掉改名高亮与提示条定时器，避免卸载后 setState。
   useEffect(() => () => {
     if (renamedTimer.current !== null) window.clearTimeout(renamedTimer.current)
+    if (mcpWatchTimer.current !== null) window.clearInterval(mcpWatchTimer.current)
     for (const timer of toastTimers.current) window.clearTimeout(timer)
   }, [])
 
-  /** 指南/MCP 解释浮层的位置：贴着面板卡片右缘内侧（面板铺满主区，外侧已无空间）。 */
+  /** 快速上手指南浮层的位置：贴着面板卡片右缘内侧（面板铺满主区，外侧已无空间）。 */
   const [guidePos, setGuidePos] = useState<{ left: number; top: number; height: number } | null>(null)
   useEffect(() => {
-    if (!guideOpen && !mcpInfoOpen) return
+    if (!guideOpen) return
     const marker = document.querySelector('[data-skm-panel-marker]')
     const card = marker?.closest('.psh-card')
     if (!(card instanceof HTMLElement)) return
     const rect = card.getBoundingClientRect()
     const vh = window.innerHeight
     const top = Math.max(8, rect.top)
-    const overlayW = mcpInfoOpen ? 330 : 300
+    const overlayW = 300
     setGuidePos({
       left: Math.max(rect.left + 12, rect.right - overlayW - 12),
       top,
       height: Math.min(rect.height, vh - top - 12),
     })
-  }, [guideOpen, mcpInfoOpen])
+  }, [guideOpen])
 
   const runToggle = async (key: string, action: () => Promise<unknown>): Promise<void> => {
     if (toggling.has(key)) return
@@ -4385,23 +4338,32 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
         </div>
         )}
 
+        {/* ── 顶栏（MCP 视图）：与技能页同构的预设 chips + 状态分段 ── */}
+        {kind === 'mcp' && (
+          <McpTopBar
+            t={t}
+            live={mcpLive}
+            scope={mcpScope}
+            onScope={setMcpScope}
+            status={mcpStatusFilter}
+            onStatus={setMcpStatusFilter}
+          />
+        )}
+
         {/* ── 主区 ── */}
         <div className={css.hubMain}>
           {kind === 'mcp' ? (
-            <McpView
+            <McpPage
               t={t}
-              tab={mcpTab}
-              onTab={setMcpTab}
-              onOpenInfo={() => { setMcpInfoOpen(true) }}
-              servers={mcpServers}
-              recommended={mcpRecommended}
-              onAdd={addRecommendMcp}
               live={mcpLive}
+              scope={mcpScope}
+              query={mcpQuery}
+              onQuery={setMcpQuery}
+              status={mcpStatusFilter}
               onAddCustom={() => { setMcpAddOpen(true) }}
-              logs={mcpLogs}
-              onClearLogs={() => { setMcpLogs([]); saveStoredLogs([]) }}
               onRefresh={() => { mcpRefreshLive() }}
-              onLogged={pushMcpLog}
+              waitingTools={mcpWaitingTools}
+              onWatchTools={(names) => { watchMcpTools(names) }}
             />
           ) : (<>          {/* 统计行 */}
           <div className={css.statsRow}>
@@ -4809,14 +4771,13 @@ export function SkillsPanel({ onClose, closing = false, anchor = null, onCardMou
       {guideOpen && guidePos !== null && (
         <GuidePanel t={t} onClose={() => { setGuideOpen(false) }} left={guidePos.left} top={guidePos.top} height={guidePos.height} />
       )}
-      {mcpInfoOpen && guidePos !== null && (
-        <McpInfoOverlay t={t} onClose={() => { setMcpInfoOpen(false) }} left={guidePos.left} top={guidePos.top} height={guidePos.height} />
-      )}
+
 
       <McpAddModal
         t={t}
         open={mcpAddOpen}
         onClose={() => { setMcpAddOpen(false) }}
+        onAdded={(added) => { watchMcpTools(added) }}
       />
 
       {/* 新建技能包弹窗：名字与分类一起给，省得建完再进去设置一次。 */}

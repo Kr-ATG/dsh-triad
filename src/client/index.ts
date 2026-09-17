@@ -13,7 +13,7 @@
  * same-origin fetch. No DSH source is modified.
  */
 
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { applyMemoryClient } from './memory/index.js'
 import { apply as applyUsageEntries } from './usage/entry.js'
 import { applyAutomation } from './automation/index.js'

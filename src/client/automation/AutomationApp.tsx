@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { PshHead, PopoverShell, ensureShellStyles } from '../popover-shell.js'
 import { NavButton, NavPortal, navAnchorFrom, usePanelAutoClose, useRail } from '../sidebar-nav.js'
 import { ensureAutomationStyles } from './styles.ts'

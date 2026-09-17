@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { IconDataOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import { Workbench } from './dashboard/Workbench'
 import { SkillsPanel } from './dashboard/SkillsPanel'
 import { ensureModalAnimStyles, useModalClose } from '../modal-animation'

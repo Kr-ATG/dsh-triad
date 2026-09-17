@@ -220,6 +220,9 @@ export function createCronScheduler({
     if (timer !== null) return
     stopped = false
     timer = setInterval(() => { void checkJobs() }, CHECK_INTERVAL)
+    // 周期 tick 不持有进程存活：宿主是常驻进程时无差别，但短生命周期宿主
+    // （headless 单跑、测试脚本）不应因为本调度器而无法退出。
+    timer.unref?.()
     // 启动即补一次：服务停机期间错过的到期任务立刻补跑，不必再等一个
     // 完整 tick（原实现最长空等 60s）。延后一拍，让宿主装配先完成。
     setTimeout(() => { if (!stopped) void checkJobs() }, 1_000).unref?.()

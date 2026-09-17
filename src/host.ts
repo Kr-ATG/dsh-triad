@@ -27,6 +27,10 @@ import { apply as applySkillToggles } from './skill-toggles.js'
 import { applySkillHealth } from './skill-health.js'
 import { applyMcpRecommended } from './mcp-recommended.js'
 import { applyMcpStatus } from './mcp-status.js'
+import { applyPresetServers } from './mcp-presets.js'
+import { applyMcpPresetMask } from './mcp-preset-mask.js'
+import { applyMcpPreviewRoute } from './mcp-paste.js'
+import { applyMcpToolDisable } from './mcp-tool-disable.js'
 import type { MemoryConfig } from './memory/types.js'
 
 /** Stable Cordis plugin name. */
@@ -133,6 +137,51 @@ export async function apply(ctx: Context, config: TriadConfig = {}): Promise<voi
   } catch (error) {
     ctx.logger?.warn?.(
       `[dsh-triad] mcp status failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+    )
+  }
+
+  // ── 预设专属 MCP Server（L2a：写进用户预设的 agent.cordis.yml）────────
+  // POST/DELETE /api/triad/mcp-presets/*：该行只对该预设（及其子代理）生效。
+  try {
+    applyPresetServers(ctx)
+    ctx.logger?.info?.('[dsh-triad] mcp preset servers mounted')
+  } catch (error) {
+    ctx.logger?.warn?.(
+      `[dsh-triad] mcp preset servers failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+    )
+  }
+
+  // ── MCP 粘贴校验（JSON / DSH 原生 YAML）────────────────────────────
+  // POST /api/triad/mcp-preview：解析 + 校验 + 预览，不写任何文件。
+  try {
+    applyMcpPreviewRoute(ctx)
+    ctx.logger?.info?.('[dsh-triad] mcp paste preview mounted')
+  } catch (error) {
+    ctx.logger?.warn?.(
+      `[dsh-triad] mcp paste preview failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+    )
+  }
+
+  // ── MCP 单工具级启停（装配过滤 + agent 作用域 deny）───────────────────
+  // PUT /api/triad/mcp-tools/:serverName：把某条工具从模型目录里摘掉
+  // （server 连接与其它工具不受影响）。
+  try {
+    applyMcpToolDisable(ctx)
+    ctx.logger?.info?.('[dsh-triad] mcp tool disable mounted')
+  } catch (error) {
+    ctx.logger?.warn?.(
+      `[dsh-triad] mcp tool disable failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+    )
+  }
+
+  // ── 预设遮蔽（L2b：账本 + agent 作用域三层同名遮蔽）──────────────────
+  // PUT /api/triad/mcp-masks/*：隐藏工具/指令/资源，全局连接保留。
+  try {
+    await applyMcpPresetMask(ctx)
+    ctx.logger?.info?.('[dsh-triad] mcp preset mask mounted')
+  } catch (error) {
+    ctx.logger?.warn?.(
+      `[dsh-triad] mcp preset mask failed to mount: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
     )
   }
 

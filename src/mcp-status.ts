@@ -4,6 +4,10 @@
  * GET  /api/triad/mcp-status  只读：注册工具（ctx.tools 中 mcp__*）∪ 配置文件
  *                             （~/.dsh/profiles/web/cordis.patch.yml 的
  *                             mcp-client 条目，含 disabled 标记）。
+ *                             0.1.6 起附带预设维度：presets（预设名单）、
+ *                             masks（预设遮蔽账本镜像）、presetServers
+ *                             （各预设自带的 mcp-client 行）、每个 server 的
+ *                             scope 与 maskedBy。
  * POST /api/triad/mcp-config  写：三种动作（默认 toggle 兼容旧客户端）：
  *                             - 无 action → disabled=true/false 标记（禁用/启用）；
  *                             - action: remove → 删除该 mcp-client 整个条目
@@ -19,6 +23,20 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import type { Context } from '@deepseek-ai/cordis'
 import { loopbackAllowed, writeJsonResponse } from './mcp-recommended.ts'
+import { readMaskLedger } from './mcp-mask-ledger.ts'
+import { maskInstallReport } from './mcp-preset-mask.ts'
+import { collectPresetServers } from './mcp-presets.ts'
+import { appendRowsToText, parseMcpPaste, pasteFieldsOf, rowsToPatchYaml } from './mcp-paste.ts'
+import {
+  knownToolsOf,
+  ledgerServerNamesOf,
+  rememberKnownTools,
+  rememberPresetOwnServers,
+  rememberServerNames,
+  serverOfToolName,
+  toolDisableTables,
+} from './mcp-tool-disable.ts'
+import { readPresetRoster } from './skill-toggles.ts'
 
 const STATUS_ROUTE = '/api/triad/mcp-status'
 const CONFIG_ROUTE = '/api/triad/mcp-config'
@@ -120,53 +138,170 @@ function readPatchContent(): string {
   return readFileSync(path, 'utf8')
 }
 
-/** 只读：合并配置文件条目与运行时注册工具。 */
-function collectMcpStatus(ctx: Context): Record<string, unknown> {
+/**
+ * 每个预设的活动 agent 作用域里可见的 `mcp__*` 工具（去重）。
+ *
+ * 预设自带的 mcp-client 行在预设作用域注册工具，插件层的全局视图看不到，
+ * 因此只能借该预设的活动 agent 枚举；同一预设的多个 agent 去重合并。
+ */
+function collectPresetTools(ctx: Context): Map<string, Array<{ name: string; description: string }>> {
+  const out = new Map<string, Array<{ name: string; description: string }>>()
+  const anyCtx = ctx as unknown as { get?: (name: string) => any }
+  const agents = anyCtx.get?.('agents')
+  const list: unknown = typeof agents?.list === 'function' ? agents.list() : []
+  const presets = anyCtx.get?.('agentPresets')
+  for (const agent of Array.isArray(list) ? list : []) {
+    if (agent === null || typeof agent !== 'object') continue
+    let presetId: unknown
+    try {
+      presetId = presets?.composedPreset?.((agent as { ctx?: unknown }).ctx)
+    } catch {
+      presetId = undefined
+    }
+    if (typeof presetId !== 'string' || presetId === '') continue
+    const schemas: unknown = (agent as { ctx?: { get?: (name: string) => any } }).ctx?.get?.('tools')?.schemas?.() ?? []
+    const seen = new Set(out.get(presetId)?.map(tool => tool.name) ?? [])
+    const merged = out.get(presetId) ?? []
+    for (const schema of Array.isArray(schemas) ? schemas : []) {
+      const name = typeof (schema as { name?: unknown })?.name === 'string' ? (schema as { name: string }).name : ''
+      if (!name.startsWith('mcp__') || seen.has(name)) continue
+      seen.add(name)
+      merged.push({
+        name,
+        description: typeof (schema as { description?: unknown }).description === 'string'
+          ? (schema as { description: string }).description
+          : '',
+      })
+    }
+    if (merged.length > 0) out.set(presetId, merged)
+  }
+  return out
+}
+
+/**
+ * 合并「注册工具 ∪ 名单缓存」成卡片要显示的完整工具清单。
+ *
+ * 缓存（tool-disable.json 的 `known`）有两层用途：预设自带的工具在没有活动
+ * agent 时枚举不到；被禁用的工具在 agent 作用域里已被隐藏。两者都靠缓存把
+ * 名字继续列出来，用户才有得点（禁用也能点回来）。
+ */
+function mergeWithKnown(serverName: string, tools: Array<{ name: string; description: string }>): Array<{ name: string; description: string }> {
+  const known = knownToolsOf(serverName)
+  if (known.length === 0) return tools
+  const seen = new Set(tools.map(tool => tool.name))
+  const missing = known.filter(name => !seen.has(name)).map(name => ({ name, description: '' }))
+  return missing.length === 0 ? tools : [...tools, ...missing]
+}
+
+/** 只读：合并配置文件条目与运行时注册工具（含预设维度）。 */
+async function collectMcpStatus(ctx: Context): Promise<Record<string, unknown>> {
   const path = patchFilePath()
   const content = readPatchContent()
   const patchEntries = content === '' ? [] : scanPatchEntries(content)
+  const [presets, presetServers] = await Promise.all([
+    readPresetRoster(ctx), collectPresetServers(ctx),
+  ])
+
+  // serverName 候选集：配置文件条目 ∪ 预设自带行 ∪ 账本键。工具全名按**最长
+  // 前缀匹配**归组，避免 `my` / `my_server` 这类前缀把工具算到别人头上
+  // （旧实现按第一个 `__` 切分会连带）。
+  const presetServerNames = Object.values(presetServers).flat().map(row => row.serverName)
+  const candidates = [
+    ...patchEntries.map(entry => entry.serverName),
+    ...presetServerNames,
+    ...ledgerServerNamesOf(),
+  ]
+  rememberServerNames(candidates)
+
   const groups = new Map<string, Array<{ name: string; description: string }>>()
   for (const schema of ctx.tools.schemas()) {
     if (typeof schema.name !== 'string' || !schema.name.startsWith('mcp__')) continue
-    const rest = schema.name.slice('mcp__'.length)
-    const sep = rest.indexOf('__')
-    if (sep <= 0) continue
-    const serverName = rest.slice(0, sep)
-    const list = groups.get(serverName)
+    const serverName = serverOfToolName(schema.name, candidates)
+    if (serverName === undefined) continue
     const tool = { name: schema.name, description: typeof schema.description === 'string' ? schema.description : '' }
+    const list = groups.get(serverName)
     if (list === undefined) groups.set(serverName, [tool])
     else list.push(tool)
   }
 
   const seen = new Set<string>()
   const servers: Array<Record<string, unknown>> = []
+  // 预设遮蔽镜像：某 server 被哪些预设显式关闭（账本 false 条目）。
+  const ledger = readMaskLedger()
+  const maskedBy = (serverName: string): string[] => Object.entries(ledger.presets)
+    .filter(([, table]) => table[serverName] === false)
+    .map(([presetId]) => presetId)
+  const knownToRemember: Record<string, string[]> = {}
   for (const entry of patchEntries) {
     seen.add(entry.serverName)
-    const tools = groups.get(entry.serverName) ?? []
+    const registered = groups.get(entry.serverName) ?? []
+    const tools = mergeWithKnown(entry.serverName, registered)
+    knownToRemember[entry.serverName] = tools.map(tool => tool.name)
     servers.push({
       serverName: entry.serverName,
-      toolCount: tools.length,
+      toolCount: registered.length,
       tools,
       config: { entryId: entry.entryId, disabled: entry.disabled, editable: true },
+      scope: 'global',
+      maskedBy: maskedBy(entry.serverName),
     })
   }
   // 注册了工具但没有配置条目（手工改过文件等情况）：只读展示。
-  for (const [serverName, tools] of groups) {
+  for (const [serverName, registered] of groups) {
     if (seen.has(serverName)) continue
+    const tools = mergeWithKnown(serverName, registered)
+    knownToRemember[serverName] = tools.map(tool => tool.name)
     servers.push({
       serverName,
-      toolCount: tools.length,
+      toolCount: registered.length,
       tools,
       config: { entryId: null, disabled: false, editable: false },
+      scope: 'global',
+      maskedBy: maskedBy(serverName),
     })
   }
+  // 预设自带 server 的工具清单：作用域注册，只有该预设的活动 agent 能看见；
+  // 没有活动 agent 时回退到名单缓存。
+  const toolsByPreset = collectPresetTools(ctx)
+  for (const [presetId, rows] of Object.entries(presetServers)) {
+    // 上报「该预设自带哪些 server」：同名时装配过滤只应用自带行那条账目。
+    rememberPresetOwnServers(presetId, rows.map(row => row.serverName))
+    const view = toolsByPreset.get(presetId) ?? []
+    for (const row of rows) {
+      const prefix = `mcp__${row.serverName}__`
+      const live = view.filter(tool => tool.name.startsWith(prefix))
+      const tools = mergeWithKnown(row.serverName, live)
+      knownToRemember[row.serverName] = tools.map(tool => tool.name)
+      if (tools.length > 0) row.tools = tools
+      // 实际注册数（不含名单缓存）：面板用它判断「进程是否已连上并注册工具」，
+      // 自动等待不能用 tools.length —— 缓存会让还没注册的 Server 看起来已就绪。
+      row.registeredCount = live.length
+    }
+  }
+  // 名单缓存只增不减：读到就记住（面板下次没有活动 agent 也能列出工具名）。
+  try {
+    rememberKnownTools(knownToRemember)
+  } catch {
+    /* 缓存写盘失败不影响状态读取 */
+  }
   servers.sort((a, b) => String(a.serverName).localeCompare(String(b.serverName)))
+  const tables = toolDisableTables()
   return {
     at: new Date().toISOString(),
     serverCount: servers.length,
     toolCount: servers.reduce((sum, server) => sum + (server.toolCount as number), 0),
     patchFile: path,
     servers,
+    presets,
+    masks: ledger.presets,
+    // 遮蔽补丁的运行期安装诊断：presetId → 几个活动 agent 挂了 deny、失败原因。
+    // 面板用它把「账本已写但工具还在」说清楚（以前只打日志，静默）。
+    maskInstall: maskInstallReport(),
+    presetServers,
+    // 工具级禁用两层账本镜像（客户端按当前范围取状态）：
+    // 有效禁用 = toolDisabled（全局层）∪ toolDisabledByPreset[当前预设]。
+    toolDisabled: tables.disabled,
+    toolDisabledByPreset: tables.presets,
   }
 }
 
@@ -342,7 +477,11 @@ export function applyMcpStatus(ctx: Context): void {
         writeJsonResponse(res, 403, { error: 'loopback-only' })
         return
       }
-      writeJsonResponse(res, 200, collectMcpStatus(ctx))
+      void collectMcpStatus(ctx).then(status => {
+        writeJsonResponse(res, 200, status)
+      }).catch((error: unknown) => {
+        writeJsonResponse(res, 500, { error: error instanceof Error ? error.message : String(error) })
+      })
     },
   }), 'dsh-mcp-status: routes')
 
@@ -359,11 +498,47 @@ export function applyMcpStatus(ctx: Context): void {
         for await (const chunk of req as unknown as AsyncIterable<Uint8Array>) {
           body += Buffer.from(chunk).toString('utf8')
         }
-        let parsed: { serverName?: unknown; disabled?: unknown; action?: unknown }
+        let parsed: Record<string, unknown>
         try {
-          parsed = JSON.parse(body) as { serverName?: unknown; disabled?: unknown; action?: unknown }
+          parsed = JSON.parse(body) as Record<string, unknown>
         } catch {
           writeJsonResponse(res, 400, { ok: false, error: 'invalid json' })
+          return
+        }
+        // ── action: add —— 粘贴文本（JSON / YAML）追加到 profile patch ──
+        if (parsed.action === 'add') {
+          try {
+            const { format, text } = pasteFieldsOf(parsed)
+            const outcome = parseMcpPaste(format, text)
+            if (outcome.errors.length > 0) {
+              writeJsonResponse(res, 400, { ok: false, errors: outcome.errors, warnings: outcome.warnings })
+              return
+            }
+            if (outcome.rows.length === 0) {
+              writeJsonResponse(res, 400, { ok: false, error: '未解析出任何 MCP server' })
+              return
+            }
+            const path = patchFilePath()
+            const content = readPatchContent()
+            const existing = new Set(scanPatchEntries(content).map(entry => entry.serverName))
+            const added: string[] = []
+            const fresh = outcome.rows.filter((row) => {
+              const serverName = String(row.config.serverName ?? '')
+              if (existing.has(serverName)) return false
+              existing.add(serverName)
+              added.push(serverName)
+              return true
+            })
+            const skipped = outcome.rows.length - fresh.length
+            if (fresh.length > 0) {
+              const next = appendRowsToText(content, rowsToPatchYaml(fresh))
+              copyFileSync(path, `${path}${BACKUP_SUFFIX}`)
+              writeFileSync(path, next, 'utf8')
+            }
+            writeJsonResponse(res, 200, { ok: true, added, skipped, warnings: outcome.warnings, patchFile: path, reload: 'live' })
+          } catch (error) {
+            writeJsonResponse(res, 400, { ok: false, error: error instanceof Error ? error.message : String(error) })
+          }
           return
         }
         const serverName = typeof parsed.serverName === 'string' ? parsed.serverName : ''

@@ -512,7 +512,7 @@ function installMask(ctx: PluginContext, agent: any): any {
 }
 
 /** 当前 preset 名单(设置页据此列圆球;服务缺失时返回空数组)。 */
-async function readRoster(ctx: PluginContext): Promise<Array<Record<string, unknown>>> {
+export async function readPresetRoster(ctx: PluginContext): Promise<Array<Record<string, unknown>>> {
   const presets = ctx.get?.('agentPresets')
   if (presets?.list === undefined) return []
   try {
@@ -646,7 +646,7 @@ async function handle(ctx: PluginContext, req: IncomingMessage, res: ServerRespo
     // ── 预设层 ────────────────────────────────────────────────────────────
     if (method === 'GET' && rest === '/presets') {
       const [roster, global, ledger] = await Promise.all([
-        readRoster(ctx), status(), readLedger(),
+        readPresetRoster(ctx), status(), readLedger(),
       ])
       json(res, 200, {
         presets: roster,

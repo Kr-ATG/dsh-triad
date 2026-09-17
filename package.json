@@ -39,17 +39,18 @@
     "client": {
       "platform": "web",
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-renderer",
         "@deepseek-ai/dsh-client-ui-slots",
         "@deepseek-ai/dsh-client-ui-conversation",
         "@deepseek-ai/dsh-client-ui-primitives",
-        "@deepseek-ai/dsh-client-ui-locale",
+        "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-input-trigger",
         "@deepseek-ai/dsh-client-ui-tool"
       ]
     }
   },
   "dependencies": {
+    "js-yaml": "^4.1.0",
     "yauzl": "^3.4.0"
   },
   "devDependencies": {
@@ -59,7 +60,7 @@
     "build": "node build.mjs",
     "smoke": "node scripts/smoke-client.mjs",
     "smoke:host": "node scripts/smoke-host.mjs",
-    "test": "node scripts/test-skill-manager.mjs && node scripts/test-skill-toggles.mjs"
+    "test": "node scripts/test-skill-manager.mjs && node scripts/test-skill-toggles.mjs && node scripts/test-mcp-layering.mjs && node scripts/test-mcp-tool-disable.mjs"
   },
   "engines": {
     "node": ">=22"
