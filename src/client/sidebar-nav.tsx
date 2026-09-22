@@ -206,7 +206,10 @@ const SHEET = `
 /* 未读 badge（记忆入口）：右上角小圆标 */
 .dsh-nav-badge{position:absolute;top:2px;right:2px;min-width:16px;height:16px;box-sizing:border-box;padding:0 4px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:var(--dsw-alias-state-warn-primary,#e8a33d);color:#0e1116;font-size:10px;font-weight:700;line-height:16px}
 /* nav host：各行纵向堆叠；独立行的槽位 display:contents，按钮直接撑满整行。 */
-#dsh-triad-nav-host{display:flex;flex-direction:column;align-items:stretch;width:100%}
+/* 宽度对齐官方相邻行：侧栏导航区（官方 panelRow/会话行）右边界在 268，
+   而本 host 的父容器带 margin-right:-12px，width:100% 会一路顶到 280 —— 右边缘比
+   官方行多探出 12px，「记忆」等按钮几乎贴住侧栏边缘。扣掉这 12px 即与官方对齐。 */
+#dsh-triad-nav-host{display:flex;flex-direction:column;align-items:stretch;width:calc(100% - 12px)}
 #dsh-triad-nav-host>[data-nav-slot]{display:contents}
 /* 合并行：[自动化][技能][记忆] 并排；槽位 display:contents 让按钮直接参与行布局，
    按钮等分整行（flex:1 1 0），与独立行的视觉节奏一致——
