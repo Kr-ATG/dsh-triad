@@ -22,7 +22,7 @@ import { loopbackAllowed, writeJsonResponse } from './mcp-recommended.ts'
 
 const STATUS_ROUTE = '/api/triad/mcp-status'
 const CONFIG_ROUTE = '/api/triad/mcp-config'
-const MCP_CLIENT_NAME = `'@deepseek-ai/dsh-mcp-client'`
+const MCP_CLIENT_PKG = '@deepseek-ai/dsh-mcp-client'
 const PROFILE_NAME = 'web'
 /** 备份文件名（固定名，覆盖式；保留最近一次切换前的版本）。 */
 const BACKUP_SUFFIX = '.bak-last-toggle'
@@ -71,7 +71,7 @@ function scanPatchEntries(content: string): PatchMcpEntry[] {
     for (let j = i + 1; j < lines.length && j <= i + 10; j += 1) {
       const line = lines[j].trimStart()
       if (line.startsWith('- ')) break
-      if (nameLine === -1 && line.startsWith('name:') && line.includes(MCP_CLIENT_NAME)) nameLine = j
+      if (nameLine === -1 && line.startsWith('name:') && line.includes(MCP_CLIENT_PKG)) nameLine = j
       if (nameLine !== -1 && serverNameLine === -1 && line.startsWith('serverName:')) {
         const m = /^serverName:\s*([A-Za-z0-9_-]+)/.exec(line)
         if (m !== null) {

@@ -9,10 +9,24 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import {
-  Button, IconAgentPresetOutline16, IconArchiveOutline20, IconCheckOutline16, IconChevronDownOutline14,
-  IconChevronLeftOutline14, IconChevronRightOutline14, IconCloseOutline16, IconCodeOutline16, IconDataOutline16,
-  IconEditOutline16, IconEllipsisOutline16, IconFolderOpenOutline16, IconPlusOutline16, IconRefreshOutline14,
-  IconSkillOutline16, IconTrashOutline16, Menu, Modal, Tooltip,
+  Button,
+  IconAgentPresetOutlineRegular as IconAgentPresetOutline16,
+  IconArchiveOutlineRegular as IconArchiveOutline20,
+  IconCheckOutlineRegular as IconCheckOutline16,
+  IconChevronDownOutlineRegular as IconChevronDownOutline14,
+  IconChevronLeftOutlineRegular as IconChevronLeftOutline14,
+  IconChevronRightOutlineRegular as IconChevronRightOutline14,
+  IconCloseOutlineRegular as IconCloseOutline16,
+  IconCodeOutlineRegular as IconCodeOutline16,
+  IconDataOutlineRegular as IconDataOutline16,
+  IconEditOutlineRegular as IconEditOutline16,
+  IconEllipsisOutlineRegular as IconEllipsisOutline16,
+  IconFolderOpenOutlineRegular as IconFolderOpenOutline16,
+  IconPlusOutlineRegular as IconPlusOutline16,
+  IconRefreshOutlineRegular as IconRefreshOutline14,
+  IconSkillOutlineRegular as IconSkillOutline16,
+  IconTrashOutlineRegular as IconTrashOutline16,
+  Menu, Modal, Tooltip,
   type MenuEntry,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { modalStaggerClass } from '../../modal-animation'

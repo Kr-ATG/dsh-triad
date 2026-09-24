@@ -389,6 +389,33 @@ async function readPersistedEvents(persistence, id, offset = 0) {
 	}
 }
 
+/** Cache last rendered usage for quick response. */
+let cachedUsageResult = null;
+let lastCollectTime = 0;
+const USAGE_COLLECT_TTL_MS = 15000;
+
+/**
+ * Compare whether two revisions correspond to the same physical file state.
+ * DSH appends a corpus-wide hash (`:hash`) to historical format revisions (v3/v2/v1),
+ * which changes whenever ANY session in the workspace is touched or created.
+ * For usage statistics, if the underlying file's dev:ino:size:mtime:ctime is unchanged,
+ * its content and tokens are guaranteed to be unchanged.
+ */
+function sameFileRevision(a, b) {
+	if (a === b) return true;
+	if (typeof a !== "string" || typeof b !== "string") return false;
+	const aParts = a.split(":");
+	const bParts = b.split(":");
+	if (aParts.length >= 5 && bParts.length >= 5) {
+		return aParts[0] === bParts[0] &&
+		       aParts[1] === bParts[1] &&
+		       aParts[2] === bParts[2] &&
+		       aParts[3] === bParts[3] &&
+		       aParts[4] === bParts[4];
+	}
+	return false;
+}
+
 /**
  * Collect per-day usage across live and persisted sessions, incrementally.
  *
@@ -404,8 +431,14 @@ async function readPersistedEvents(persistence, id, offset = 0) {
  * A failed per-session read keeps the previous fold — it must never erase
  * history from the cache.
  */
-export async function collectUsage(ctx) {
+export async function collectUsage(ctx, force = false) {
+	if (!force && cachedUsageResult !== null && Date.now() - lastCollectTime < USAGE_COLLECT_TTL_MS) {
+		return cachedUsageResult;
+	}
 	return withLock(async () => {
+		if (!force && cachedUsageResult !== null && Date.now() - lastCollectTime < USAGE_COLLECT_TTL_MS) {
+			return cachedUsageResult;
+		}
 		const cache = await loadCache();
 		const live = ctx.get("sessions");
 		const attached = new Set();
@@ -466,7 +499,10 @@ export async function collectUsage(ctx) {
 				if (attached.has(id)) continue;
 				const previous = cache.sessions[id];
 				// Unchanged opaque revision: keep the folded state, no I/O.
-				if (previous !== void 0 && previous.kind === "persisted" && revision !== void 0 && previous.revision === revision) continue;
+				if (previous !== void 0 && previous.kind === "persisted" && revision !== void 0 && sameFileRevision(previous.revision, revision)) {
+					if (previous.revision !== revision) previous.revision = revision;
+					continue;
+				}
 				try {
 					const state = previous ?? createUsageState();
 					const wasPersisted = state.kind === "persisted";
@@ -519,14 +555,18 @@ export async function collectUsage(ctx) {
 		// Keep the atomic cache write inside the single-flight section. Otherwise
 		// overlapping saves can race on the same temporary file.
 		await saveCache(ctx, cache);
-		return renderUsage(byDay, byHour, Date.now());
+		const rendered = renderUsage(byDay, byHour, Date.now());
+		cachedUsageResult = rendered;
+		lastCollectTime = Date.now();
+		return rendered;
 	});
 }
 
 async function handleUsage(ctx, req, res) {
 	if (rejectForeignCaller(req, res)) return;
 	try {
-		const result = await collectUsage(ctx);
+		const force = typeof req.url === "string" && (req.url.includes("refresh=1") || req.url.includes("force=1"));
+		const result = await collectUsage(ctx, force);
 		json(res, 200, { ok: true, ...result });
 	} catch (error) {
 		ctx.logger.warn(`usage-stats: usage aggregation failed: ${String(error)}`);
@@ -679,8 +719,11 @@ async function handleBudgetPost(ctx, req, res) {
  */
 async function configuredProviders(ctx) {
 	const settings = ctx.get("settings");
+	const getSetting = (ns) => typeof settings?.get === "function"
+		? settings.get(ns)
+		: settings?.describe?.()?.find((d) => d.ns === ns)?.value;
 	const providers = [];
-	const deepseek = settings?.get?.("llm-deepseek");
+	const deepseek = getSetting("llm-deepseek");
 	if (deepseek !== void 0 && deepseek !== null && typeof deepseek === "object") {
 		providers.push({
 			id: "deepseek-official",
@@ -696,7 +739,7 @@ async function configuredProviders(ctx) {
 			baseURL: DEEPSEEK_DEFAULTS.baseURL
 		});
 	}
-	const pi = settings?.get?.("llm-pi-ai");
+	const pi = getSetting("llm-pi-ai");
 	if (pi !== void 0 && pi !== null && typeof pi === "object" && pi.providers !== void 0 && typeof pi.providers === "object") {
 		for (const [route, profile] of Object.entries(pi.providers)) {
 			if (profile === null || typeof profile !== "object") continue;

@@ -6,7 +6,7 @@
  */
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { IconDataOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconDataOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import { Workbench } from './dashboard/Workbench'
 import { SkillsPanel } from './dashboard/SkillsPanel'
@@ -39,7 +39,7 @@ function UsageWorkbenchEntry(): JSX.Element {
   return (
     <>
       <NavButton
-        icon={<IconDataOutline16 size={rail ? 18 : 16} />}
+        icon={<IconDataOutlineRegular size={rail ? 18 : 16} />}
         label="用量"
         rail={rail}
         expanded={open}

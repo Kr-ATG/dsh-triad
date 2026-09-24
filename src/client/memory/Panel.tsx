@@ -24,13 +24,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Button,
-  IconEditOutline16,
-  IconFolderOpenOutline16,
-  IconPlusOutline16,
-  IconRefreshOutline14,
-  IconSearchOutline16,
-  IconSparkle16,
-  IconTrashOutline16,
+  IconEditOutlineRegular,
+  IconFolderOpenOutlineRegular,
+  IconPlusOutlineRegular,
+  IconRefreshOutlineRegular,
+  IconSearchOutlineRegular,
+  IconSparkleRegular,
+  IconTrashOutlineRegular,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import { MarkstreamMarkdown } from './markdown.js'
@@ -1351,7 +1351,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
         </Tooltip>
         <Tooltip label={t('edit')} side="bottom" delayMs={500}>
           <button type="button" className={css.iconAction} aria-label={t('edit')} disabled={busy} onClick={() => { startEdit(entry) }}>
-            <IconEditOutline16 size={14} />
+            <IconEditOutlineRegular size={14} />
           </button>
         </Tooltip>
         <Tooltip label={t('copyContent')} side="bottom" delayMs={500}>
@@ -1361,7 +1361,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
         </Tooltip>
         <Tooltip label={t('move')} side="bottom" delayMs={500}>
           <button type="button" className={css.iconAction} aria-label={t('move')} disabled={busy} onClick={() => { startMove(entry) }}>
-            <IconFolderOpenOutline16 size={14} />
+            <IconFolderOpenOutlineRegular size={14} />
           </button>
         </Tooltip>
         <Tooltip label={enabled ? t('disable') : t('enable')} side="bottom" delayMs={500}>
@@ -1378,7 +1378,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
         {retired ? (
           <Tooltip label={t('restore')} side="bottom" delayMs={500}>
             <button type="button" className={css.iconAction} aria-label={t('restore')} disabled={busy} onClick={() => { handleRestore(entry) }}>
-              <IconRefreshOutline14 size={14} />
+              <IconRefreshOutlineRegular size={14} />
             </button>
           </Tooltip>
         ) : (
@@ -1390,7 +1390,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
         )}
         <Tooltip label={t('delete')} side="bottom" delayMs={500}>
           <button type="button" className={`${css.iconAction} ${css.iconActionDanger}`} aria-label={t('delete')} disabled={busy} onClick={() => { handleDelete(entry) }}>
-            <IconTrashOutline16 size={14} />
+            <IconTrashOutlineRegular size={14} />
           </button>
         </Tooltip>
       </div>
@@ -1818,7 +1818,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
               }
             }}
           >
-            <IconPlusOutline16 size={14} />
+            <IconPlusOutlineRegular size={14} />
             {t('add')}
           </button>
           <nav className={css.navList}>
@@ -1972,7 +1972,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
           {/* 顶栏：搜索 + 统计 + 关闭 */}
           <div className={css.topbar}>
             <label className={css.topSearch} title={t('cmdK')}>
-              <span className={css.topSearchIcon}><IconSearchOutline16 size={14} /></span>
+              <span className={css.topSearchIcon}><IconSearchOutlineRegular size={14} /></span>
               <input
                 ref={searchRef}
                 className={css.topInput}
@@ -2088,13 +2088,13 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                             disabled={busy || consolidating}
                             onClick={handleConsolidate}
                           >
-                            <IconSparkle16 size={13} />
+                            <IconSparkleRegular size={13} />
                             {t('consolidate')}
                           </button>
                         </Tooltip>
                         <Tooltip label={t('retry')} side="top" delayMs={500}>
                           <button type="button" className={`${css.toolBtn} ${css.toolBtnIcon}`} aria-label={t('retry')} disabled={busy} onClick={() => { void refresh() }}>
-                            <IconRefreshOutline14 size={13} />
+                            <IconRefreshOutlineRegular size={13} />
                           </button>
                         </Tooltip>
                         <button type="button" className={css.toolBtn} disabled={filtered.length === 0} onClick={enterSelecting}>
@@ -2141,7 +2141,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                         </span>
                         <Tooltip label={t('clearProject')} side="top" delayMs={500}>
                           <button type="button" className={`${css.iconAction} ${css.iconActionDanger}`} aria-label={t('clearProject')} disabled={busy} onClick={handleClearProject}>
-                            <IconTrashOutline16 size={14} />
+                            <IconTrashOutlineRegular size={14} />
                           </button>
                         </Tooltip>
                       </div>
@@ -2212,7 +2212,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                 <span className={css.spacer} />
                 <Tooltip label={t('retry')} side="top" delayMs={500}>
                   <button type="button" className={css.iconAction} aria-label={t('retry')} disabled={busy} onClick={() => { void loadChanges() }}>
-                    <IconRefreshOutline14 />
+                    <IconRefreshOutlineRegular />
                   </button>
                 </Tooltip>
               </div>
@@ -2246,7 +2246,7 @@ export function MemoryPanel({ open, closing = false, onClose, initialTab, anchor
                 <span className={css.spacer} />
                 <Tooltip label={t('retry')} side="top" delayMs={500}>
                   <button type="button" className={css.iconAction} aria-label={t('retry')} disabled={busy} onClick={() => { void loadRevisions() }}>
-                    <IconRefreshOutline14 />
+                    <IconRefreshOutlineRegular />
                   </button>
                 </Tooltip>
               </div>
